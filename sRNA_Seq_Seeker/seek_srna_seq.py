@@ -4,9 +4,8 @@ from numpy import genfromtxt
 import argparse
 import glob
 import os
-from io import StringIO
-import pandas as pd
 import matplotlib.pyplot as plt
+from gff_merger.single_gff_overlap_merger import Single_GFF_Overlap_Merger as gff_mrg
 
 
 def main():
@@ -35,7 +34,7 @@ def main():
     outfile.write(f"###gff-version 3\n{srna_gff_str}###")
     outfile.close()
     if args.merge_overlaps:
-        srna_gff_str = merge_overlaps(srna_gff_str)
+        srna_gff_str = gff_mrg(srna_gff_str, 0, "sRNA").merge_overlaps()
         print("\nWriting merged output to file")
         outfile = open(f"{output_path}/merged_{output_base_name}", "w")
         outfile.write(f"###gff-version 3\n{srna_gff_str}###")
@@ -146,68 +145,6 @@ def plot_hist(list_in, title, output_file):
     plt.xticks(range(distinct_list[0], distinct_list[-1] + 1, 1))
     plt.grid(True)
     fig.savefig(output_file)
-
-
-def merge_overlaps(srna_gff_str):
-    col_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
-    ret_srna_gff_str = ""
-    sran_gff_df = pd.read_csv(StringIO(srna_gff_str), names=col_names, sep="\t", comment="#")
-    accession_list = list(sran_gff_df.accession.unique())
-    df_dict = {}
-    for acc in accession_list:
-        df_dict[f"{acc}_f"] = \
-            merge_interval_lists(sran_gff_df[(sran_gff_df['accession'] == acc) & (sran_gff_df['strand'] == "+")]
-                                 .loc[:, ['start', 'end']].sort_values(by=['start']).values.tolist())
-        df_dict[f"{acc}_r"] = \
-            merge_interval_lists(sran_gff_df[(sran_gff_df['accession'] == acc) & (sran_gff_df['strand'] == "-")]
-                                 .loc[:, ['start', 'end']].sort_values(by=['start']).values.tolist())
-    strand_func = lambda x: "+" if "_f" in x else "-"
-    strand_letter_func = lambda x: "F" if "+" in x else "R"
-    for acc in accession_list:
-        for dict_key in df_dict.keys():
-            if dict_key == f"{acc}_f" or dict_key == f"{acc}_r":
-                for loc in df_dict[dict_key]:
-                    ret_srna_gff_str += \
-                        f"{acc}\t" + \
-                        f"sRNA_Seq_Seeker\t" + \
-                        f"merged_possible_sRNA_seq\t" + \
-                        f"{loc[0]}\t" + \
-                        f"{loc[1]}\t" + \
-                        f".\t" + \
-                        f"{strand_func(dict_key)}\t" + \
-                        f".\t" + \
-                        f".\n"
-    ret_sran_gff_df = pd.read_csv(StringIO(ret_srna_gff_str), names=col_names, sep="\t", comment="#")
-    ret_sran_gff_df = ret_sran_gff_df.sort_values(by=['accession', 'start'])
-    srna_count = 0
-    last_accession = ""
-    # Writing attributes
-    for index, row in ret_sran_gff_df.iterrows():
-        if last_accession != row['accession']:
-            last_accession = row['accession']
-            srna_count = 0
-        srna_count += 1
-        ret_sran_gff_df.at[index, 'attributes'] = f"id={row['accession']}_" + \
-                                                  f"{strand_letter_func(row['strand'])}_possible_srna_{srna_count};" + \
-                                                  f"name={row['accession']}_" + \
-                                                  f"{strand_letter_func(row['strand'])}_possible_srna_{srna_count};" + \
-                                                  f"seq_len={row['end'] - row['start']}"
-    ret_srna_gff_str = ret_sran_gff_df.to_csv(sep="\t", index=False, header=False)
-    print(f"Total sRNAs after merge: {ret_sran_gff_df.shape[0]}")
-    return ret_srna_gff_str
-
-
-def merge_interval_lists(list_in, merge_range=0):
-    list_out = []
-    for loc in list_in:
-        if len(list_out) == 0:
-            list_out.append(loc)
-        else:
-            if loc[0] in range(list_out[-1][0], list_out[-1][-1] + merge_range):
-                list_out[-1][-1] = loc[-1]
-            else:
-                list_out.append(loc)
-    return list_out
 
 
 def parse_attributes(attr_str):

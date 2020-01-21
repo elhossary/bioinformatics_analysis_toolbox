@@ -1,4 +1,4 @@
-from wiggle_parser import WiggleParser as wp
+from wiggle_parser.wiggle_parser import WiggleParser as wp
 import matplotlib.pyplot as plt
 import pandas as pd
 import collections
