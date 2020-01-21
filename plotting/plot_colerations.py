@@ -18,7 +18,7 @@ def main():
     plt.plot(df.cutoff.values.tolist(), df.srna_count.values.tolist(), label="sRNAs before merge")
     plt.plot(df.cutoff.values.tolist(), df.merged_srna_count.values.tolist(), label="sRNAs after merge")
     plt.title("Correlation between counts of terminators and sRNA at different cutoffs")
-    plt.xlabel("Minimumwc  Term-Seq coverage")
+    plt.xlabel("Minimum Term-Seq coverage")
     plt.ylabel("Counts")
     plt.xticks(range(int(min(df.cutoff.values.tolist())) - 1, int(max(df.cutoff.values.tolist())) + 1, 1))
     plt.yticks(range(0, max(df.term_count.values.tolist()) + 500, 500))
