@@ -45,7 +45,7 @@ def main():
         counters[f'wig_pos_count_{accession}'] = 0
         f_wig_df_sliced = f_wigs_parsed[accession][f_wigs_parsed[accession][1] >= args.min_coverage]
         r_wig_df_sliced = r_wigs_parsed[accession][r_wigs_parsed[accession][1] <= args.min_coverage*-1]
-        counters[f'wig_pos_count_{accession}'] += f_wig_df_sliced.shape[0] + r_wig_df_sliced.shape[0]
+        counters[f'wig_pos_count_{accession}'] = f_wig_df_sliced.shape[0] + r_wig_df_sliced.shape[0]
 
         for i in f_positions:
             i[0] -= args.pre_signal_offset
@@ -64,20 +64,20 @@ def main():
         counters[f'pos_not_in_cov_{accession}'] = 0
         counters[f'pos_no_match_{accession}'] = 0
         for position in f_positions:
-            if get_score_of_wig_loc(f_wig_df_sliced, list(range(position[0], position[1]))):
+            if get_score_of_wig_loc(f_wig_df_sliced, position):
                 counters[f'f_cov_drop_matches_{accession}'] += 1
                 ret_list.append([accession, position[0], position[1], "+"])
             else:
-                if get_score_of_wig_loc(f_wigs_parsed[accession], list(range(position[0], position[1]))):
+                if get_score_of_wig_loc(f_wigs_parsed[accession], position):
                     counters[f'pos_no_match_{accession}'] += 1
                 else:
                     counters[f'pos_not_in_cov_{accession}'] += 1
         for position in r_positions:
-            if get_score_of_wig_loc(r_wig_df_sliced, list(range(position[0], position[1]))):
+            if get_score_of_wig_loc(r_wig_df_sliced, position):
                 counters[f'r_cov_drop_matches_{accession}'] += 1
                 ret_list.append([accession, position[0], position[1], "-"])
             else:
-                if get_score_of_wig_loc(r_wigs_parsed[accession], list(range(position[0], position[1]))):
+                if get_score_of_wig_loc(r_wigs_parsed[accession], position):
                     counters[f'pos_no_match_{accession}'] += 1
                 else:
                     counters[f'pos_not_in_cov_{accession}'] += 1
@@ -96,11 +96,11 @@ def main():
           f"\t- Minimum poly-{args.base} length\t{args.min_len}\n"
           f"\t- Base\t{args.base}")
     print(f"Output:\n"
-          f"\t- Total coverage drop matches (sum)\t"
+          f"\t- Total count of coverage peaks matches (sum)\t"
           f"{sum(v for k, v in counters.items() if 'a_cov_drop_matches_' in k):,}\n"
-          f"\t- Total coverage drop matches in forward\t"
+          f"\t- Total count of coverage peaks matches in forward\t"
           f"{sum(v for k, v in counters.items() if 'f_cov_drop_matches_' in k):,}\n"
-          f"\t- Total coverage drop matches in reverse\t"
+          f"\t- Total count of coverage peaks matches in reverse\t"
           f"{sum(v for k, v in counters.items() if 'r_cov_drop_matches_' in k):,}\n"
           f"\t- Total Poly-{args.base} signals\t{sum(v for k, v in counters.items() if 'poly_signals_count_' in k):,}")
     print(f"\t- Poly-{args.base} signals that has no coverage\t"
@@ -230,7 +230,7 @@ def seek_window(seq_str, window_size, tolerance):
 
 
 def get_score_of_wig_loc(wig_df, pos):
-    x = wig_df[wig_df[0].isin(range(pos[0], pos[-1]))]
+    x = wig_df[wig_df[0].isin(list(range(pos[0], pos[-1])))]
     if x.empty:
         return False
     else:
