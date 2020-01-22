@@ -45,7 +45,7 @@ def main():
         counters[f'wig_pos_count_{accession}'] = 0
         f_wig_df_sliced = f_wigs_parsed[accession][f_wigs_parsed[accession][1] >= args.min_coverage]
         r_wig_df_sliced = r_wigs_parsed[accession][r_wigs_parsed[accession][1] <= args.min_coverage*-1]
-        counters[f'wig_pos_count_{accession}'] = f_wig_df_sliced.shape[0] + r_wig_df_sliced.shape[0]
+        # counters[f'wig_pos_count_{accession}'] = f_wig_df_sliced.shape[0] + r_wig_df_sliced.shape[0]
 
         for i in f_positions:
             i[0] -= args.pre_signal_offset
@@ -106,10 +106,13 @@ def main():
     print(f"\t- Poly-{args.base} signals that has no coverage\t"
           f"{sum(v for k, v in counters.items() if 'pos_no_match_' in k):,}\n"
           f"\t- Poly-{args.base} signals that found in the coverage but does not meet the matching parameters\t"
-          f"{sum(v for k, v in counters.items() if 'pos_not_in_cov_' in k):,}\n"
-          f"\t- Total number of positions in coverage\t"
-          f"{sum(v for k, v in counters.items() if 'wig_pos_count_' in k):,}")
+          f"{sum(v for k, v in counters.items() if 'pos_not_in_cov_' in k):,}")
 
+    """
+    
+          f"\t- Total number of positions in coverage\t"
+          f"{sum(v for k, v in counters.items() if 'wig_pos_count_' in k):,}"
+    """
     print("Writing GFF file...")
     term_gff_str = ""
     count = 0
