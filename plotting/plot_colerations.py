@@ -21,7 +21,7 @@ def main():
     plt.xlabel("Minimum Term-Seq coverage")
     plt.ylabel("Counts")
     plt.xticks(range(int(min(df.cutoff.values.tolist())) - 1, int(max(df.cutoff.values.tolist())) + 1, 1))
-    plt.yticks(range(0, max(df.term_count.values.tolist()) + 500, 500))
+    plt.yticks(range(0, max(df.term_count.values.tolist()) + 200, 100))
     plt.grid(True)
     plt.legend()
     fig.savefig(os.path.abspath(args.plot_path_out))

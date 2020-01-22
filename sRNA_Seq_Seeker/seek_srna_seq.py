@@ -5,7 +5,7 @@ import argparse
 import glob
 import os
 import matplotlib.pyplot as plt
-from gff_merger.single_gff_overlap_merger import Single_GFF_Overlap_Merger as gff_mrg
+from gff_merger.gff_overlap_merger import GFF_Overlap_Merger as gff_mrg
 
 
 def main():
@@ -34,8 +34,10 @@ def main():
     outfile.write(f"###gff-version 3\n{srna_gff_str}###")
     outfile.close()
     if args.merge_overlaps:
-        srna_gff_str = gff_mrg(srna_gff_str, 0, "sRNA").merge_overlaps()
+        srna_gff_str, count_before, count_after = gff_mrg(srna_gff_str, 0, "sRNA").merge_overlaps()
         print("\nWriting merged output to file")
+        print(f"Total annotations after merge: {count_after} of {count_before}")
+        print(f"Merged ratio: {count_after / count_before * 100}%")
         outfile = open(f"{output_path}/merged_{output_base_name}", "w")
         outfile.write(f"###gff-version 3\n{srna_gff_str}###")
         outfile.close()
