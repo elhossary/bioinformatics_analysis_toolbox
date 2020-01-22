@@ -37,7 +37,7 @@ def main():
         srna_gff_str, count_before, count_after = gff_mrg(srna_gff_str, 0, "sRNA").merge_overlaps()
         print("\nWriting merged output to file")
         print(f"Total annotations after merge: {count_after} of {count_before}")
-        print(f"Merged ratio: {(count_before - count_after) / count_before * 100}%")
+        print(f"Merged ratio: {round((count_before - count_after) / count_before * 100, 2)}%")
         outfile = open(f"{output_path}/merged_{output_base_name}", "w")
         outfile.write(f"###gff-version 3\n{srna_gff_str}###")
         outfile.close()
