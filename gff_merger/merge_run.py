@@ -15,7 +15,6 @@ def main():
     input_files = []
     for input in args.gff_in.split(','):
         input_files.extend(glob.glob(input))
-    print(input_files)
     if args.single_mode:
         for file in input_files:
             gff_merged, count_before, count_after = gff_mrg(open(os.path.abspath(file), "r").read(),
@@ -26,7 +25,6 @@ def main():
             outfile = open(f"{os.path.abspath(os.path.join(file, os.pardir))}/merged_{os.path.basename(file)}", "w")
             outfile.write(f"###gff-version 3\n{gff_merged}###")
             outfile.close()
-
         print("Done!")
     else:
         files_appended = ""
@@ -37,8 +35,8 @@ def main():
         files_merged, count_before, count_after = \
             gff_mrg(files_appended, args.merge_range, args.annotation_type).merge_overlaps()
         files_merged.count('\n')
-        print(f"Total annotations after merge: {count_after} of {count_before}")
-        print(f"Merged ratio: {count_after / count_before * 100}%")
+        print(f"Total annotations count after merge: {count_after} of {count_before}")
+        print(f"Merged ratio: {(count_before - count_after) / count_before * 100}%")
         print(f"\nWriting output to file: merged_all.gff")
         outfile = open(f"{os.path.abspath(os.path.join(input_files[0], os.pardir))}/merged_all.gff", "w")
         outfile.write(f"###gff-version 3\n{files_merged}###")
