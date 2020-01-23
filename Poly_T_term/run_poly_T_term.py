@@ -63,6 +63,7 @@ def main():
         counters[f'r_cov_drop_matches_{accession}'] = 0
         counters[f'pos_not_in_cov_{accession}'] = 0
         counters[f'pos_no_match_{accession}'] = 0
+
         for position in f_positions:
             if get_score_of_wig_loc(f_wig_df_sliced, position):
                 counters[f'f_cov_drop_matches_{accession}'] += 1
@@ -119,6 +120,7 @@ def main():
     current_accession = ""
     out_df = pd.DataFrame.from_records(ret_list)
     out_df = out_df.sort_values([0, 1])
+    strand_letter_func = lambda x: "f" if x == "+" else "r"
     for index, row in out_df.iterrows():
         if current_accession != row[0] or current_accession == "":
             # term_gff_str += "###\n"
@@ -134,8 +136,8 @@ def main():
             f".\t" + \
             f"{row[3]}\t" + \
             f".\t" + \
-            f"id={current_accession}_{row[3]}_term_end{count};" + \
-            f"name={current_accession}_{row[3]}_term_end{count}\n"
+            f"id={current_accession}_{strand_letter_func(row[3])}_term_end_{count};" + \
+            f"name={current_accession}_{strand_letter_func(row[3])}_term_end_{count}\n"
     outfile = open(args.gff_out, "w")
     outfile.write(f"###gff-version 3\n{term_gff_str}###")
     outfile.close()
@@ -233,11 +235,27 @@ def seek_window(seq_str, window_size, tolerance):
 
 
 def get_score_of_wig_loc(wig_df, pos):
+    #wig_df = wig_df[(wig_df[0] >= pos[0]) & (wig_df[0] <= pos[-1])]
+    wig_df = wig_df[wig_df[0].between(pos[0], pos[-1])]
+    if wig_df.empty:
+        return False
+    else:
+        return True
+"""
+def get_score_of_wig_loc(wig_df, pos):
+    pos = list(range(pos[0], pos[-1]))
+    x = wig_df[wig_df[0].apply(lambda i: i in pos)]
+    if x.empty:
+        return False
+    else:
+        return True
+"""
+"""
+def get_score_of_wig_loc(wig_df, pos):
     x = wig_df[wig_df[0].isin(list(range(pos[0], pos[-1])))]
     if x.empty:
         return False
     else:
         return True
-
-
+"""
 main()
