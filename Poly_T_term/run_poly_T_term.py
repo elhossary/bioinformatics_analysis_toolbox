@@ -120,7 +120,7 @@ def main():
     current_accession = ""
     out_df = pd.DataFrame.from_records(ret_list)
     out_df = out_df.sort_values([0, 1])
-    strand_letter_func = lambda x: "f" if x == "+" else "r"
+    strand_letter_func = lambda x: "F" if x == "+" else "R"
     for index, row in out_df.iterrows():
         if current_accession != row[0] or current_accession == "":
             # term_gff_str += "###\n"
@@ -136,8 +136,8 @@ def main():
             f".\t" + \
             f"{row[3]}\t" + \
             f".\t" + \
-            f"id={current_accession}_{strand_letter_func(row[3])}_term_end_{count};" + \
-            f"name={current_accession}_{strand_letter_func(row[3])}_term_end_{count}\n"
+            f"id={current_accession}_{strand_letter_func(row[3])}_poly_T_terminator_{count};" + \
+            f"name={current_accession}_{strand_letter_func(row[3])}_poly_T_terminator_{count}\n"
     outfile = open(args.gff_out, "w")
     outfile.write(f"###gff-version 3\n{term_gff_str}###")
     outfile.close()
