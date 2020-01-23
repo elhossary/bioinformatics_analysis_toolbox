@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 import os
-import glob
+import math
 
 
 def main():
@@ -20,11 +20,20 @@ def main():
     plt.title("Correlation between counts of terminators and sRNA at different cutoffs")
     plt.xlabel("Minimum Term-Seq coverage")
     plt.ylabel("Counts")
-    plt.xticks(range(int(min(df.cutoff.values.tolist())) - 1, int(max(df.cutoff.values.tolist())) + 1, 1))
-    plt.yticks(range(0, max(df.term_count.values.tolist()) + 200, 100))
+    x_step = math.ceil((max(df.cutoff.values.tolist()) - min(df.cutoff.values.tolist())) / 50)
+    x_ticks = list(range(min(df.cutoff.values.tolist()), max(df.cutoff.values.tolist()) + x_step, x_step))
+    y_ceil = calc_ceil(max(df.term_count.values.tolist()))
+    y_step = calc_ceil(int(y_ceil / 24))
+    y_ticks = list(range(0, y_ceil + y_step, y_step))
+    plt.xticks(x_ticks)
+    plt.yticks(y_ticks)
     plt.grid(True)
     plt.legend()
     fig.savefig(os.path.abspath(args.plot_path_out))
+
+
+def calc_ceil(x):
+    return int(math.ceil(x / 100.0)) * 100
 
 
 main()
