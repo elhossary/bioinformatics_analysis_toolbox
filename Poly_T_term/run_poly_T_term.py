@@ -2,7 +2,7 @@ from Bio import SeqIO
 from numpy import diff, where, split
 import argparse
 import pandas as pd
-import wiggle_parser.WiggleParser as wp
+from wiggle_parser import WiggleParser as wp
 import glob
 
 
