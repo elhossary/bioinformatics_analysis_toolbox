@@ -5,7 +5,7 @@ import argparse
 import glob
 import os
 import matplotlib.pyplot as plt
-from gff_overlap_merger import GFF_Overlap_Merger as gff_mrg
+from .gff_overlap_merger import GFF_Overlap_Merger as gff_mrg
 
 
 def main():
