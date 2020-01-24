@@ -36,6 +36,7 @@ def main():
     counters = {}
     # The following line is repeated due to the previous iterator exhaustion
     fasta_parsed = SeqIO.parse(glob.glob(args.fasta_in)[0], "fasta")
+    x = 1
     for seq_record in fasta_parsed:
         f_seq_str = str(seq_record.seq)
         accession = seq_record.id
@@ -176,17 +177,13 @@ def drop_invalid_signals(all_signals, window_size, tolerance):
     valid_signals = []
     for signal in all_signals:
         # Drop any signal shorter than the window
-        if len(signal) < window_size - 1 - tolerance:
-            continue
-        # Seek the window across the signal
-        for index, pos in enumerate(signal):
-            # first check if the end of window does not exceed the list size
-            if len(signal) < index + window_size:
-                break
-            # Check if the sliding window contains the required positions
-            if 0 <= (signal[index + (window_size - 1)] - pos) - window_size <= tolerance:
-                valid_signals.append([signal[0], signal[-1]])
-                break
+        if len(signal) >= window_size - tolerance:
+            for index, pos in enumerate(signal):
+                if index + (window_size - tolerance) <= len(signal):
+                    if 0 <= (signal[index + (window_size - tolerance - 1)] - pos) - (window_size - tolerance) <= tolerance:
+                        valid_signals.append([signal[0], signal[-1]])
+                        break
+
     return valid_signals
 
 
@@ -203,6 +200,7 @@ def group_positions(seq_str, base, max_interruption, window_size, tolerance, min
     r_signals = drop_invalid_signals(r_signals, window_size, tolerance)
     f_poly_base_signal_locations = [[i[0], i[-1]] for i in f_signals if i[-1] - i[0] >= min_len]
     r_poly_base_signal_locations = [[i[0], i[-1]] for i in r_signals if i[-1] - i[0] >= min_len]
+
     return f_poly_base_signal_locations, r_poly_base_signal_locations
 
 
@@ -220,6 +218,7 @@ def merge_interval_lists(list_in, merge_range):
 
 
 def seek_window(seq_str, window_size, tolerance):
+    #################CHANGE BASE PARAM
     f_locations = []
     r_locations = []
     for index, nt in enumerate(seq_str):
@@ -235,8 +234,8 @@ def seek_window(seq_str, window_size, tolerance):
 
 
 def get_score_of_wig_loc(wig_df, pos):
-    #wig_df = wig_df[(wig_df[0] >= pos[0]) & (wig_df[0] <= pos[-1])]
     wig_df = wig_df[wig_df[0].between(pos[0], pos[-1])]
+
     if wig_df.empty:
         return False
     else:
