@@ -19,11 +19,11 @@ def main():
     for file in gff_files:
         gff_df = pd.read_csv(os.path.abspath(file), names=column_names, sep="\t", comment="#")
         for index, row in gff_df.iterrows():
-            output_str += f"[{row['accession']} {row['start']}:{row['end']} {row['strand']}]"\
+            output_str += f"- [{row['accession']} {row['start']}:{row['end']} {row['strand']}]"\
                            f"({args.url}&loc={row['accession']}%3A"\
                            f"{str(int(row['start']) - 20) if int(row['start']) - 20 > 0 else 0}"\
                            f"..{str(int(row['end']) + 20)}"\
-                           f"&highlight={row['accession']}%3A{row['start']}..{row['end']})\n\n"
+                           f"&highlight={row['accession']}%3A{row['start']}..{row['end']})\n"
         output_path = os.path.abspath(os.path.join(file, os.pardir))
         output_basename = os.path.basename(file).replace('.gff', '.md').replace('.GFF', '.md')
         out_file = open(f"{output_path}/{datetime.datetime.today().strftime('%Y-%m-%d')}_{output_basename}", "w")
