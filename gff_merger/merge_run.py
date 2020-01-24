@@ -13,8 +13,8 @@ def main():
                         , help="Single file merge mode, if you pass many files, each file will be merged separately")
     args = parser.parse_args()
     input_files = []
-    for input in args.gff_in.split(','):
-        input_files.extend(glob.glob(input))
+    for input_item in args.gff_in.split(','):
+        input_files.extend(glob.glob(input_item))
     if args.single_mode:
         for file in input_files:
             gff_merged, count_before, count_after = gff_mrg(open(os.path.abspath(file), "r").read(),
