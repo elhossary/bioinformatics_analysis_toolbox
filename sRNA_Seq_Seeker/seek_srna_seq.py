@@ -25,9 +25,9 @@ def main():
     print(f"Seeking for possible sRNA at sequences at length between {args.min_len} and {args.max_len}")
     srna_gff_str, term_matching_tss_counts, tss_matching_term_counts \
         = find_possible_sRNA(args.max_len, tss_arr, term_arr, args.min_len)
-    plot_hist(term_matching_tss_counts, "How many TSSs are connected to each terminator",
+    plot_hist(term_matching_tss_counts, "How many TSSs are linked to each terminator",
               f"{output_path}/plot_TSS_to_Term_{output_base_name}.png")
-    plot_hist(tss_matching_term_counts, "How many terminators are connected to each TSS",
+    plot_hist(tss_matching_term_counts, "How many terminators are linked to each TSS",
               f"{output_path}/plot_Term_to_TSS_{output_base_name}.png")
     print("\nWriting output to file")
     outfile = open(args.gff_out, "w")
@@ -141,8 +141,8 @@ def plot_hist(list_in, title, output_file):
     bins = len(distinct_list)
     fig = plt.figure()
     plt.hist(list_in, bins=bins, rwidth=0.5)
-    plt.title(f"{title}\nZero connections count: {zero_counts}")
-    plt.xlabel(f"Connections number")
+    plt.title(f"{title}\nZero links count: {zero_counts}")
+    plt.xlabel(f"Number of links")
     plt.ylabel("Frequency")
     plt.xticks(range(distinct_list[0], distinct_list[-1] + 1, 1))
     plt.grid(True)
