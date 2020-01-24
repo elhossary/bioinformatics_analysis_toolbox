@@ -21,7 +21,7 @@ def main():
     plt.xlabel("Minimum Term-Seq coverage")
     plt.ylabel("Counts")
     x_tick_size = math.ceil((max(df.cutoff.values.tolist()) - min(df.cutoff.values.tolist())) / 50)
-    x_ticks = list(range(min(df.cutoff.values.tolist()), max(df.cutoff.values.tolist()) + x_tick_size, x_tick_size))
+    x_ticks = list(range(int(min(df.cutoff.values.tolist())), int(max(df.cutoff.values.tolist())) + x_tick_size, x_tick_size))
     y_ceil = calc_ceil(max(df.term_count.values.tolist()))
     y_tick_size = calc_ceil(int(y_ceil / 24))
     y_ticks = list(range(0, y_ceil + y_tick_size, y_tick_size))
