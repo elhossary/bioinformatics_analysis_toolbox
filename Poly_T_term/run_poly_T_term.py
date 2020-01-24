@@ -180,7 +180,8 @@ def drop_invalid_signals(all_signals, window_size, tolerance):
         if len(signal) >= window_size - tolerance:
             for index, pos in enumerate(signal):
                 if index + (window_size - tolerance) <= len(signal):
-                    if 0 <= (signal[index + (window_size - tolerance - 1)] - pos) - (window_size - tolerance) <= tolerance:
+                    if 0 <= (signal[index + (window_size - tolerance - 1)] - pos) - (window_size - tolerance)\
+                            <= tolerance:
                         valid_signals.append([signal[0], signal[-1]])
                         break
 
