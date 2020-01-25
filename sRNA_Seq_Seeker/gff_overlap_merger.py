@@ -12,8 +12,6 @@ class GFF_Overlap_Merger:
     def merge_overlaps(self):
         col_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
         ret_gff_str = ""
-        ret_count_before = 0
-        ret_count_after = 0
         gff_df = pd.read_csv(StringIO(self.gff_str), names=col_names, sep="\t", comment="#").dropna()
         accession_list = list(gff_df.accession.unique())
         df_dict = {}

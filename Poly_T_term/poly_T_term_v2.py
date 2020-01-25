@@ -20,10 +20,15 @@ def main():
     parser.add_argument("--window_size", required=True, help="", type=int)
     parser.add_argument("--tolerance", required=True, help="", type=int)
     parser.add_argument("--merge_range", default=0, required=False, help="", type=int)
-
+    parser.add_argument("--min_len", default=None, required=False, help="", type=int)
     parser.add_argument("--base", default="T", required=False, help="", type=str)
+    parser.add_argument("--raw_poly_merge_range", default=30, required=True, help="", type=int)
+    parser.add_argument("--peak_percentage", required=True, help="", type=int)
     args = parser.parse_args()
     # ---------------------------
+    if args.min_len <= args.window_size or args.min_len is None:
+        print("WARNING: Minimum length will be overridden by the window size.")
+        args.min_len = args.window_size
     print("Loading sequence file...")
     fasta_parsed = SeqIO.parse(glob.glob(args.fasta_in)[0], "fasta")
     wig_files = glob.glob(args.wigs_in)
@@ -38,11 +43,11 @@ def main():
         f_seq_str = str(seq_record.seq)
         accession = seq_record.id
         f_positions, r_positions = group_positions(f_seq_str, args.base, args.max_interruption, args.window_size,
-                                                   args.tolerance)
+                                                   args.tolerance, args.min_len)
         # f_positions, r_positions = seek_window(f_seq_str, args.window_size, args.tolerance)
         counters[f'wig_pos_count_{accession}'] = 0
         f_wig_df_sliced = f_wigs_parsed[accession][f_wigs_parsed[accession][1] >= args.min_coverage]
-        r_wig_df_sliced = r_wigs_parsed[accession][r_wigs_parsed[accession][1] <= args.min_coverage*-1]
+        r_wig_df_sliced = r_wigs_parsed[accession][r_wigs_parsed[accession][1] <= args.min_coverage * -1]
         # counters[f'wig_pos_count_{accession}'] = f_wig_df_sliced.shape[0] + r_wig_df_sliced.shape[0]
 
         for i in f_positions:
@@ -92,6 +97,7 @@ def main():
           f"\t- Window size\t{args.window_size}\n"
           f"\t- Tolerance\t{args.tolerance}\n"
           f"\t- Merge range\t{args.merge_range}\n"
+          f"\t- Minimum poly-{args.base} length\t{args.min_len}\n"
           f"\t- Base\t{args.base}")
     print(f"Output:\n"
           f"\t- Total count of coverage peaks matches (sum)\t"
@@ -107,7 +113,7 @@ def main():
           f"{sum(v for k, v in counters.items() if 'pos_not_in_cov_' in k):,}")
 
     """
-    
+
           f"\t- Total number of positions in coverage\t"
           f"{sum(v for k, v in counters.items() if 'wig_pos_count_' in k):,}"
     """
@@ -176,7 +182,7 @@ def drop_invalid_signals(all_signals, window_size, tolerance):
         if len(signal) >= window_size - tolerance:
             for index, pos in enumerate(signal):
                 if index + (window_size - tolerance) <= len(signal):
-                    if 0 <= (signal[index + (window_size - tolerance - 1)] - pos) - (window_size - tolerance)\
+                    if 0 <= (signal[index + (window_size - tolerance - 1)] - pos) - (window_size - tolerance) \
                             <= tolerance:
                         valid_signals.append([signal[0], signal[-1]])
                         break
@@ -184,7 +190,7 @@ def drop_invalid_signals(all_signals, window_size, tolerance):
     return valid_signals
 
 
-def group_positions(seq_str, base, max_interruption, window_size, tolerance):
+def group_positions(seq_str, base, max_interruption, window_size, tolerance, min_len=None):
     complement_base = lambda x: "T" if base == "A" else "A"
     f_indices = [i for i, a in enumerate(seq_str, 1) if a == base]
     r_indices = [i for i, a in enumerate(seq_str, 1) if a == complement_base(base)]
@@ -193,9 +199,12 @@ def group_positions(seq_str, base, max_interruption, window_size, tolerance):
     # Get all signals to any length with max interruption
     f_signals = list(map(list, split(f_indices, where(diff(f_indices) > max_interruption)[0] + 1)))
     r_signals = list(map(list, split(r_indices, where(diff(r_indices) > max_interruption)[0] + 1)))
+    f_signals = merge_interval_lists(f_signals, args.raw_poly_merge_range)
     f_signals = drop_invalid_signals(f_signals, window_size, tolerance)
     r_signals = drop_invalid_signals(r_signals, window_size, tolerance)
-    return f_signals, r_signals
+    f_poly_base_signal_locations = [[i[0], i[-1]] for i in f_signals if i[-1] - i[0] >= min_len - 1]
+    r_poly_base_signal_locations = [[i[0], i[-1]] for i in r_signals if i[-1] - i[0] >= min_len - 1]
+    return f_poly_base_signal_locations, r_poly_base_signal_locations
 
 
 def merge_interval_lists(list_in, merge_range):
@@ -232,7 +241,13 @@ def get_score_of_wig_loc(wig_df, pos):
     if wig_df.empty:
         return False
     else:
+        peak_score = wig_df[1].values.max()
+        peak_pos = wig_df[wig_df[1] == peak_score][0].values[0]
+
+        print(peak_pos)
         return True
+
+
 """
 def get_score_of_wig_loc(wig_df, pos):
     pos = list(range(pos[0], pos[-1]))
