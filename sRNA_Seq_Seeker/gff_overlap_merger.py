@@ -60,7 +60,8 @@ class GFF_Overlap_Merger:
         return ret_gff_str, gff_df.shape[0], ret_gff_df.shape[0]
 
     @staticmethod
-    def merge_interval_lists(list_in, merge_range=0):
+    def merge_interval_lists(list_in, merge_range):
+        merge_range += 2
         list_out = []
         for loc in list_in:
             if len(list_out) == 0:

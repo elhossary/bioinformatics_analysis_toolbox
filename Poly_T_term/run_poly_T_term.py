@@ -199,6 +199,7 @@ def group_positions(seq_str, base, max_interruption, window_size, tolerance):
 
 
 def merge_interval_lists(list_in, merge_range):
+    merge_range += 2
     list_out = []
     for loc in list_in:
         if len(list_out) == 0:
