@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--plot_path_out", required=True, help="Output file: Choose PNG or pdf", type=str)
     args = parser.parse_args()
     #
-    df = pd.read_csv(os.path.abspath(args.csv_in), sep='\t').dropna()
+    df = pd.read_csv(os.path.abspath(args.csv_in), sep='\t').dropna().sort_values(by=['cutoff'])
     fig = plt.figure(figsize=(16, 9))
     plt.plot(df.cutoff.values.tolist(), df.term_count.values.tolist(), label='Terminators')
     plt.plot(df.cutoff.values.tolist(), df.srna_count.values.tolist(), label="sRNAs before merge")

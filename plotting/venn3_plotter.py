@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 
 A_all = 317 # dRNA srna
-B_all = 503 # Term-Seq srna
+B_all = 502 # Term-Seq srna
 C_all = 105 # Kai srna
 AB_intersect = 54
 AC_intersect = 36
