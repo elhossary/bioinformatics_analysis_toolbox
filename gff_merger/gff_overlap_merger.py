@@ -4,7 +4,7 @@ from io import StringIO
 
 class GFF_Overlap_Merger:
 
-    def __init__(self, gff_str, merge_range=0, annotation_type="unknown_annotation"):
+    def __init__(self, gff_str, annotation_type, merge_range):
         self.gff_str = gff_str
         self.merge_range = merge_range
         self.annotation_type = annotation_type
@@ -24,6 +24,12 @@ class GFF_Overlap_Merger:
                 self.merge_interval_lists(gff_df[(gff_df['accession'] == acc) & (gff_df['strand'] == "-")]
                                           .loc[:, ['start', 'end']].sort_values(by=['start', 'end']).values.tolist(),
                                           self.merge_range)
+        seq_types = gff_df.type.unique().tolist()
+        if self.annotation_type == "":
+            if len(seq_types) == 1:
+                self.annotation_type = seq_types[0]
+            else:
+                self.annotation_type = "unknown_sequence_type"
         strand_func = lambda x: "+" if "_f" in x else "-"
         strand_letter_func = lambda x: "F" if "+" in x else "R"
         for acc in accession_list:
@@ -32,7 +38,7 @@ class GFF_Overlap_Merger:
                     for loc in df_dict[dict_key]:
                         ret_gff_str += \
                             f"{acc}\t" + \
-                            f"{self.annotation_type}_merger\t" + \
+                            f"GFF_merger\t" + \
                             f"merged_{self.annotation_type}_seq\t" + \
                             f"{loc[0]}\t" + \
                             f"{loc[1]}\t" + \

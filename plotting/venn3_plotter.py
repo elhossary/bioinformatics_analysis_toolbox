@@ -3,12 +3,12 @@ from matplotlib import pyplot as plt
 
 
 A_all = 317 # dRNA srna
-B_all = 502 # Term-Seq srna
+B_all = 854 # Term-Seq srna
 C_all = 105 # Kai srna
-AB_intersect = 54
+AB_intersect = 77
 AC_intersect = 36
-BC_intersect = 27
-random_all_intersects = 107
+BC_intersect = 34
+random_all_intersects = 133
 sum_all_2_node_intersect = AB_intersect + AC_intersect + BC_intersect
 ABC_intersect = sum_all_2_node_intersect - random_all_intersects
 
