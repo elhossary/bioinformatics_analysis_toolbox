@@ -47,7 +47,7 @@ def main():
             if not files_appended.endswith('\n'):
                 files_appended += "\n"
         files_merged, count_before, count_after = \
-            gff_mrg(files_appended, args.merge_range, args.annotation_type).merge_overlaps()
+            gff_mrg(files_appended, args.annotation_type, args.merge_range).merge_overlaps()
         files_merged.count('\n')
         print(f"Total {args.annotation_type} count before merge:\t{count_before}")
         print(f"Total {args.annotation_type} count after merge:\t{count_after}")
