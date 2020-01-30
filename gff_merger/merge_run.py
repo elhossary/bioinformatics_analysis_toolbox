@@ -6,7 +6,8 @@ import glob
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gff_in", required=True, type=str, help="Input GFF file(s), comma separated or wildcards")
+    parser.add_argument("--gff_in", required=True, type=str, nargs='+',
+                        help="Input GFF file(s) --gff_in file 1, --gff_in file 2")
     parser.add_argument("--gff_out", required=False, type=str, help="Output GFF file.")
     parser.add_argument("--merge_range", required=False, type=int, default=0,
                         help="Distance between 2 sequences to merge in one if they are not overlapping")
@@ -18,13 +19,14 @@ def main():
         parser.error("ERROR:  --gff_out argument is required when --single_mode argument id not used.")
 
     input_files = []
-    for input_item in args.gff_in.split(' '):
-        input_files.extend(glob.glob(input_item))
+    for item in args.gff_in:
+        input_files.extend(glob.glob(item))
+    input_files = list(set(input_files))
     if args.single_mode:
         args.annotation_type = ""
         for file in input_files:
-            output_base_name = f"merged_{os.path.basename(args.gff_in)}"
-            output_path = os.path.abspath(os.path.join(args.gff_in, os.pardir))
+            output_base_name = f"merged_{os.path.basename(file)}"
+            output_path = os.path.abspath(os.path.join(file, os.pardir))
             output_file = f"{output_path}/{output_base_name}"
 
             gff_merged, count_before, count_after = gff_mrg(open(os.path.abspath(file), "r").read(),
