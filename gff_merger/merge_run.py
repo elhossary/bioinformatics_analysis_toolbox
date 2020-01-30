@@ -18,7 +18,7 @@ def main():
         parser.error("ERROR:  --gff_out argument is required when --single_mode argument id not used.")
 
     input_files = []
-    for input_item in args.gff_in.split(','):
+    for input_item in args.gff_in.split(' '):
         input_files.extend(glob.glob(input_item))
     if args.single_mode:
         args.annotation_type = ""
