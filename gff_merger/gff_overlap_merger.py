@@ -4,10 +4,11 @@ from io import StringIO
 
 class GFF_Overlap_Merger:
 
-    def __init__(self, gff_str, annotation_type, merge_range):
+    def __init__(self, gff_str, annotation_type, merge_range, overlaps_only):
         self.gff_str = gff_str
         self.merge_range = merge_range
         self.annotation_type = annotation_type
+        self.overlaps_only = overlaps_only
 
     def merge_overlaps(self):
         col_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
@@ -19,11 +20,11 @@ class GFF_Overlap_Merger:
             df_dict[f"{acc}_f"] = \
                 self.merge_interval_lists(gff_df[(gff_df['accession'] == acc) & (gff_df['strand'] == "+")]
                                           .loc[:, ['start', 'end']].sort_values(by=['start', 'end']).values.tolist(),
-                                          self.merge_range)
+                                          self.merge_range, self.overlaps_only)
             df_dict[f"{acc}_r"] = \
                 self.merge_interval_lists(gff_df[(gff_df['accession'] == acc) & (gff_df['strand'] == "-")]
                                           .loc[:, ['start', 'end']].sort_values(by=['start', 'end']).values.tolist(),
-                                          self.merge_range)
+                                          self.merge_range, self.overlaps_only)
         seq_types = gff_df.type.unique().tolist()
         if self.annotation_type == "":
             if len(seq_types) == 1:
@@ -66,16 +67,19 @@ class GFF_Overlap_Merger:
         return ret_gff_str, gff_df.shape[0], ret_gff_df.shape[0]
 
     @staticmethod
-    def merge_interval_lists(list_in, merge_range):
+    def merge_interval_lists(list_in, merge_range, overlaps_only):
         merge_range += 2
         list_out = []
+        overlap_indices = []
         for loc in list_in:
             if len(list_out) == 0:
                 list_out.append(loc)
             else:
                 if loc[0] in range(list_out[-1][0], list_out[-1][-1] + merge_range):
-
                     list_out[-1][-1] = max([loc[-1], list_out[-1][-1]])
+                    overlap_indices.append(list_out.index(list_out[-1]))
                 else:
                     list_out.append(loc)
+        if overlaps_only:
+            list_out = [list_out[i] for i in overlap_indices]
         return list_out
