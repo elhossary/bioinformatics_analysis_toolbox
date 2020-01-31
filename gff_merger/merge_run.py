@@ -27,12 +27,13 @@ def main():
     if args.single_mode:
         args.annotation_type = ""
         for file in input_files:
-            output_base_name = f"omerged_{os.path.basename(file)}"
+            output_base_name = f"{'overlaps_only_' if args.overlaps_only else 'merged_'}{os.path.basename(file)}"
             output_path = os.path.abspath(os.path.join(file, os.pardir))
             output_file = f"{output_path}/{output_base_name}"
 
             gff_merged, count_before, count_after = gff_mrg(open(os.path.abspath(file), "r").read(),
-                                                            args.annotation_type, args.merge_range, args.overlaps_only).merge_overlaps()
+                                                            args.annotation_type, args.merge_range,
+                                                            args.overlaps_only).merge_overlaps()
             print(f"Total annotations count before merge:\t{count_before}")
             print(f"Total annotations count after merge:\t{count_after}")
             print(f"Difference:\t{count_before - count_after}")
