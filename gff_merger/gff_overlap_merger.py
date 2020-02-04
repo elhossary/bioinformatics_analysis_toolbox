@@ -83,6 +83,7 @@ class GFF_Overlap_Merger:
         if annotate == 'overlaps':
             list_out = [list_out[i] for i in overlap_indices]
         if annotate == 'no_overlaps':
-            for i in overlap_indices:
+            overlap_indices.sort()
+            for i in reversed(overlap_indices):
                 del list_out[i]
         return list_out
