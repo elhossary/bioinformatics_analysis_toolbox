@@ -78,12 +78,16 @@ class GFF_Overlap_Merger:
                 if loc[0] in range(list_out[-1][0], list_out[-1][-1] + merge_range):
                     list_out[-1][-1] = max([loc[-1], list_out[-1][-1]])
                     overlap_indices.append(list_out.index(list_out[-1]))
+
                 else:
                     list_out.append(loc)
+        if annotate == 'all':
+            return list_out
+        overlap_indices = list(set(overlap_indices))
+        overlap_indices.sort()
         if annotate == 'overlaps':
             list_out = [list_out[i] for i in overlap_indices]
         if annotate == 'no_overlaps':
-            overlap_indices.sort()
             for i in reversed(overlap_indices):
                 del list_out[i]
         return list_out
