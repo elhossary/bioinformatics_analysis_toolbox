@@ -1,32 +1,38 @@
 from matplotlib_venn import venn3
 from matplotlib import pyplot as plt
+import argparse
 
 
-A_all = 204 # dRNA srna
-B_all = 471 # Term-Seq srna
-C_all = 90 # manual anno
-AB_intersect = 52
-AC_intersect = 6
-BC_intersect = 55
-random_all_intersects = 107
-sum_all_2_node_intersect = AB_intersect + AC_intersect + BC_intersect
-ABC_intersect = sum_all_2_node_intersect - random_all_intersects
+parser = argparse.ArgumentParser()
+parser.add_argument("--title", required=True, nargs='+', help="", type=str)
+parser.add_argument("--A_all", required=True, help="", type=int)
+parser.add_argument("--A_all_title", required=True, nargs='+', help="", type=str)
+parser.add_argument("--B_all", required=True, help="", type=int)
+parser.add_argument("--B_all_title", required=True, nargs='+', help="", type=str)
+parser.add_argument("--C_all", required=True, help="", type=int)
+parser.add_argument("--C_all_title", required=True, nargs='+', help="", type=str)
+parser.add_argument("--AB", required=True, help="AB_intersect", type=int)
+parser.add_argument("--AC", required=True, help="AC_intersect", type=int)
+parser.add_argument("--BC", required=True, help="BC_intersect", type=int)
+parser.add_argument("--ABC", required=True, help="ABC_intersect", type=int)
+parser.add_argument("--output", required=True, help="Path to output file with extension PNG or PDF", type=str)
+args = parser.parse_args()
 
-ABnotC = AB_intersect - ABC_intersect
-BCnotA = BC_intersect - ABC_intersect
-ACnotB = AC_intersect - ABC_intersect
-
-A = A_all - AC_intersect - ABnotC
-B = B_all - BC_intersect - ABnotC
-C = C_all - BC_intersect - ACnotB
-
-subsets = (A, B, ABnotC, C, ACnotB, BCnotA, ABC_intersect)
-
-
-labels = (f"{A_all} sRNAs based on dRNA-Seq",
-          f"{B_all} sRNAs based on dRNA-seq TSS\nand Term-Seq Terminators",
-          f"{C_all} sRNAs from Kai's annotations")
+args.title = ' '.join(args.title)
+args.A_all_title = ' '.join(args.A_all_title)
+args.B_all_title = ' '.join(args.B_all_title)
+args.C_all_title = ' '.join(args.C_all_title)
+ABnotC = args.AB - args.ABC
+BCnotA = args.BC - args.ABC
+ACnotB = args.AC - args.ABC
+A = args.A_all - (args.ABC + ABnotC + ACnotB)
+B = args.B_all - (args.ABC + ABnotC + BCnotA)
+C = args.C_all - (args.ABC + BCnotA + ACnotB)
+subsets = (A, B, ABnotC, C, ACnotB, BCnotA, args.ABC)
+labels = (f"{args.A_all} {args.A_all_title}",
+          f"{args.B_all} {args.B_all_title}",
+          f"{args.C_all} {args.C_all_title}")
 fig = plt.figure(figsize=(10, 5))
 venn3(subsets=subsets, set_labels=labels, alpha=0.5)
-plt.title("sRNAs overlapping plot")
-fig.savefig("ecoli_sRNA_venn_cutoff_10.png")
+plt.title(f"{args.A_all + args.B_all + args.C_all} {args.title}")
+fig.savefig(args.output)

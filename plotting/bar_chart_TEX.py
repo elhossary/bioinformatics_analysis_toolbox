@@ -2,11 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-labels = ['Paper published', 'TSSpredator default', 'ANNOgesic optimized']
-tss = [7202, 12692, 2286]
-transcripts = [8230, 9576, 8230]
-terminators = [2501, 2471, 2501]
-srnas = [317, 422, 464]
+labels = ['Thomason Paper',
+          'TSSpredator default\n(normalized coverage)',
+          'TSSpredator default\n(raw coverage)',
+          'ANNOgesic optimized']
+tss = [15121, 15204, 15634, 2102]
+transcripts = [5505, 5505, 9386, 5505]
+terminators = [3099, 3099, 3127, 3099]
+srnas = [204, 204, 468, 236]
 
 x = np.arange(len(labels))  # the label locations
 width = 0.2  # the width of the bars
@@ -42,4 +45,4 @@ autolabel(rects_terminators)
 autolabel(rects_srnas)
 fig.tight_layout()
 
-plt.savefig("TEX_bar_chart.png")
+plt.savefig("ecoli_TEX_bar_chart.png")

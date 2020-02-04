@@ -4,11 +4,11 @@ from io import StringIO
 
 class GFF_Overlap_Merger:
 
-    def __init__(self, gff_str, annotation_type, merge_range, overlaps_only):
+    def __init__(self, gff_str, annotation_type, merge_range, annotate):
         self.gff_str = gff_str
         self.merge_range = merge_range
         self.annotation_type = annotation_type
-        self.overlaps_only = overlaps_only
+        self.annotate = annotate
 
     def merge_overlaps(self):
         col_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
@@ -20,11 +20,11 @@ class GFF_Overlap_Merger:
             df_dict[f"{acc}_f"] = \
                 self.merge_interval_lists(gff_df[(gff_df['accession'] == acc) & (gff_df['strand'] == "+")]
                                           .loc[:, ['start', 'end']].sort_values(by=['start', 'end']).values.tolist(),
-                                          self.merge_range, self.overlaps_only)
+                                          self.merge_range, self.annotate)
             df_dict[f"{acc}_r"] = \
                 self.merge_interval_lists(gff_df[(gff_df['accession'] == acc) & (gff_df['strand'] == "-")]
                                           .loc[:, ['start', 'end']].sort_values(by=['start', 'end']).values.tolist(),
-                                          self.merge_range, self.overlaps_only)
+                                          self.merge_range, self.annotate)
         seq_types = gff_df.type.unique().tolist()
         if self.annotation_type == "":
             if len(seq_types) == 1:
@@ -67,7 +67,7 @@ class GFF_Overlap_Merger:
         return ret_gff_str, gff_df.shape[0], ret_gff_df.shape[0]
 
     @staticmethod
-    def merge_interval_lists(list_in, merge_range, overlaps_only):
+    def merge_interval_lists(list_in, merge_range, annotate):
         merge_range += 2
         list_out = []
         overlap_indices = []
@@ -80,6 +80,9 @@ class GFF_Overlap_Merger:
                     overlap_indices.append(list_out.index(list_out[-1]))
                 else:
                     list_out.append(loc)
-        if overlaps_only:
+        if annotate == 'overlaps':
             list_out = [list_out[i] for i in overlap_indices]
+        if annotate == 'no_overlaps':
+            for i in overlap_indices:
+                del list_out[i]
         return list_out
