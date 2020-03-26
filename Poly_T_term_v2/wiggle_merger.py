@@ -31,9 +31,9 @@ class WiggleMerger:
         for accession in f_wigs_parsed.keys():
             f_wigs_parsed[accession][1] = f_wigs_parsed[accession].iloc[:, 1:-1].max(axis=1)
             f_wigs_parsed[accession] = f_wigs_parsed[accession].iloc[:, [0, -1]]
-            f_wigs_parsed[accession] = f_wigs_parsed[accession][f_wigs_parsed[accession][1] != 0.0]
+            #f_wigs_parsed[accession] = f_wigs_parsed[accession][f_wigs_parsed[accession][1] != 0.0]
         for accession in r_wigs_parsed.keys():
             r_wigs_parsed[accession][1] = r_wigs_parsed[accession].iloc[:, 1:-1].min(axis=1)
             r_wigs_parsed[accession] = r_wigs_parsed[accession].iloc[:, [0, -1]]
-            r_wigs_parsed[accession] = r_wigs_parsed[accession][r_wigs_parsed[accession][1] != 0.0]
+            #r_wigs_parsed[accession] = r_wigs_parsed[accession][r_wigs_parsed[accession][1] != 0.0]
         return f_wigs_parsed, r_wigs_parsed

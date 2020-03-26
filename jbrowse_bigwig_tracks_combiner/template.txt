@@ -1,0 +1,8 @@
+[tracks.###NAME###]
+key=###KEY###
+type=MultiBigWig/View/Track/MultiWiggle/MultiXYPlot
+storeClass=MultiBigWig/Store/SeqFeature/MultiBigWig
+autoscale=local
+urlTemplates+=json:{"url":"raw_data/bigwig/.bw", "color": "###color###"}
+description=###DESCRIPTION###
+nonCont=true

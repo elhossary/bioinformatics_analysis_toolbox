@@ -3,10 +3,10 @@ from numpy import diff, where, split
 
 class PatternLocationsFetcher:
 
-    def __init__(self, seq_str, base, orientation, max_interruption):
+    def __init__(self, seq_str, orientation, base, max_interruption):
         self.seq_str = seq_str
-        self.base = base
         self.orientation = orientation
+        self.base = base
         self.max_interruption = max_interruption
 
     def fetch_locations(self):
