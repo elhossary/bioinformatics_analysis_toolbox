@@ -31,6 +31,7 @@ def main():
     fasta_parsed = SeqIO.parse(glob.glob(args.fasta_in)[0], "fasta")
     x = 1
     for seq_record in fasta_parsed:
+
         f_seq_str = str(seq_record.seq)
         accession = seq_record.id
         f_positions = plf(f_seq_str, "f", args.base, args.max_interruption).fetch_locations()
