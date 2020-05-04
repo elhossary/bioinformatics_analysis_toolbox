@@ -7,6 +7,7 @@ from Bio import SeqIO
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--refseq_in", required=True, help="", type=str)
@@ -43,6 +44,7 @@ for seq_record in fasta_parsed:
                                  f":(-)_from_{start}_to_{end}\n{seq}\n"
             else:
                 print("Fatal error")
+print("Writing fasta file...")
 outfile = open(path.abspath(args.fasta_out), "w")
 outfile.write(f"{fasta_out_str}")
 outfile.close()
