@@ -43,6 +43,6 @@ for seq_record in fasta_parsed:
                                  f":(-)_from_{start}_to_{end}\n{seq}\n"
             else:
                 print("Fatal error")
-outfile = open(args.fasta_out, "w")
+outfile = open(path.abspath(args.fasta_out), "w")
 outfile.write(f"{fasta_out_str}")
 outfile.close()
