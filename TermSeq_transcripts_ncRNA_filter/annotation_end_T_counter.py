@@ -23,7 +23,6 @@ for index, row in gff_df.iterrows():
             r_seq = str(seq_record.reverse_complement().seq)
             break
     if row['strand'] == "+":
-
         t_count = f_seq[int(row['end']) - args.end_range:int(row['end'])].count("T")
     elif row['strand'] == "-":
         t_count = r_seq[int(row['start']):int(row['start']) + args.end_range].count("T")
@@ -42,6 +41,7 @@ for index, row in gff_df.iterrows():
         f";seq_len={int(row['end']) - int(row['start']) + 1}" + \
         f";t_count={t_count}" + \
         "\n"
-outfile = open(f"T_counted_{path.basename(args.gff_in)}", "w")
+out_dir = path.abspath(args.gff_in).replace(path.basename(args.gff_in), "")
+outfile = open(f"{out_dir}T_counted_{path.basename(args.gff_in)}", "w")
 outfile.write(f"###gff-version 3\n{str_out}###")
 outfile.close()
