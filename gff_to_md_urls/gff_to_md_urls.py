@@ -18,6 +18,7 @@ def main():
     extra_columns = ""
     extra_columns_sep = ""
     checks_list = []
+
     if args.extra_column is not None:
         for col in args.extra_column:
             extra_columns += f"|**{col}**"
