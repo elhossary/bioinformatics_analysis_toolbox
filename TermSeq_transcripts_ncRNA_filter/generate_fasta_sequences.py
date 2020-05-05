@@ -20,6 +20,7 @@ gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comme
 fasta_out_str = ""
 f_seq = ""
 r_seq = ""
+args.end_range = args.end_range - 1
 for seq_record in fasta_parsed:
     f_seq = str(seq_record.seq)
     r_seq = str(seq_record.reverse_complement().seq)
