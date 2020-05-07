@@ -19,15 +19,14 @@ ticks = range(abs(int(csv_df[args.data_column].values.min() - 1)), abs(int(csv_d
 #bins = 50
 bins = np.linspace(0, 30, 50)
 fig = plt.figure(figsize=(16, 9))
-
-for index, k in enumerate(sorted(lists.keys())):
-    if args.hist_type == "stacked":
-        plt.hist(lists[k], bins, stacked=True, label=k, color=colors[index])
-    elif args.hist_type == "overlaid":
+if args.hist_type == "stacked":
+    plt.hist([v for k, v in lists.items()], bins, stacked=True, label=all_sources, color=colors)
+elif args.hist_type == "overlaid":
+    for index, k in enumerate(sorted(lists.keys())):
         plt.hist(lists[k], bins, alpha=0.5, label=k, color=colors[index])
 plt.legend(prop={'size': 10})
 plt.title(f"{args.data_column.replace('_', ' ')} absolute distribution ({args.hist_type})")
-plt.xlabel(f"Values")
+plt.xlabel(f"Energy value (Kcal/mol)")
 plt.ylabel("Frequency")
 #plt.xticks(range(0, 31, 1))
 #plt.yticks(range(0, 7, 1))
