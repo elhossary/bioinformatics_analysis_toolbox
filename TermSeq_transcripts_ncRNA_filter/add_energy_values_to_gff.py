@@ -28,7 +28,7 @@ str_out = ""
 seq_len = 0
 for index, row in gff_df.iterrows():
     for item in energy_values_list:
-        seq_len = len(item[1])
+        seq_len = len(item[1]) + 1
         if row['strand'] == "+":
             start = row['end'] - seq_len
             if row['seqid'] in item[0] and str(start) in item[0] and \
