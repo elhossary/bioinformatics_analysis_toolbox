@@ -42,7 +42,6 @@ def main():
                             parse_attributes(row['attributes'])['id'] in item[0] and \
                             seq.replace("T", "U") in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
-                        print(energy_value)
                         break
             elif row['strand'] == "-":
                 seq = r_seq[int(row['start']) - args.offset:int(row['start']) + args.end_range]
@@ -53,7 +52,6 @@ def main():
                             parse_attributes(row['attributes'])['id'] in item[0] and \
                             seq.replace("T", "U")[::-1] in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
-                        print(energy_value)
                         break
             else:
                 print("Fatal error")
