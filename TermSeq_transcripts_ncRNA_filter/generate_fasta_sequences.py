@@ -27,20 +27,20 @@ for seq_record in fasta_parsed:
     for index, row in gff_df.iterrows():
         if row['seqid'] == seq_record.id:
             if row['strand'] == "+":
-                start = int(row['end']) - args.end_range
+                start = int(row['end']) - args.end_range - 1
                 end = int(row['end']) + args.offset
                 if start < int(row['start']):
                     start = int(row['start'])
                 seq = f_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
+                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['name']}"\
                                  f":(+)_from_{start}_to_{end}\n{seq}\n"
             elif row['strand'] == "-":
-                start = int(row['start']) - args.offset
+                start = int(row['start']) - args.offset - 1
                 end = int(row['start']) + args.end_range
                 if int(row['end']) < end:
                     end = int(row['end'])
                 seq = r_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
+                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['name']}"\
                                  f":(-)_from_{start}_to_{end}\n{seq[::-1]}\n"
             else:
                 print("Fatal error")

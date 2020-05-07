@@ -34,22 +34,22 @@ def main():
                 continue
             energy_value = ""
             if row['strand'] == "+":
-                seq = f_seq[int(row['end']) - args.end_range:int(row['end']) + args.offset]
+                seq = f_seq[int(row['end']) - args.end_range - 1:int(row['end']) + args.offset]
                 t_count = seq.count("T")
                 longest_t_count = get_longest_continuous_t(seq)
                 for item in energy_values_list:
                     if row['seqid'] in item[0] and "+" in item[0] and \
-                            parse_attributes(row['attributes'])['id'] in item[0] and \
+                            parse_attributes(row['attributes'])['name'] in item[0] and \
                             seq.replace("T", "U") in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
                         break
             elif row['strand'] == "-":
-                seq = r_seq[int(row['start']) - args.offset:int(row['start']) + args.end_range]
+                seq = r_seq[int(row['start']) - args.offset - 1:int(row['start']) + args.end_range]
                 t_count = seq.count("T")
                 longest_t_count = get_longest_continuous_t(seq)
                 for item in energy_values_list:
                     if row['seqid'] in item[0] and "-" in item[0] and \
-                            parse_attributes(row['attributes'])['id'] in item[0] and \
+                            parse_attributes(row['attributes'])['name'] in item[0] and \
                             seq.replace("T", "U")[::-1] in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
                         break
