@@ -47,7 +47,7 @@ r_seq = ""
 t_count = 0
 longest_t_count = 0
 energy_values_list = parse_energy_values_file(args.energy_values_in)
-energy_value = 0.0
+
 for seq_record in fasta_parsed:
     for index, row in gff_df.iterrows():
         if row['seqid'] == seq_record.id:
@@ -55,6 +55,7 @@ for seq_record in fasta_parsed:
             r_seq = str(seq_record.reverse_complement().seq)[::-1]  # reverse of reverse_complement
         else:
             continue
+        energy_value = ""
         if row['strand'] == "+":
             seq = f_seq[int(row['end']) - args.end_range:int(row['end']) + args.offset]
             t_count = seq.count("T")
