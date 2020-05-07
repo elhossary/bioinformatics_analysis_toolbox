@@ -12,8 +12,9 @@ parser.add_argument("--source", required=False, help="", type=str)
 parser.add_argument("--file_out", required=True, help="", type=str)
 args = parser.parse_args()
 csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#")
-fig = plt.figure(figsize=(16, 9))
+
 if args.plot_type == "hist":
+    fig = plt.figure(figsize=(16, 9))
     if args.source != 'all':
         val_list = csv_df[csv_df['source'] == args.source][args.data_column].values.tolist()
     else:
@@ -28,6 +29,7 @@ if args.plot_type == "hist":
     plt.grid(True)
     fig.savefig(f"{os.path.abspath(args.file_out)}")
 if args.plot_type == "bar":
+    fig = plt.figure(figsize=(8, 6))
     if args.source != 'all':
         x_axis = list(set(csv_df[csv_df['source'] == args.source][args.data_column].values.tolist()))
         heights = []
