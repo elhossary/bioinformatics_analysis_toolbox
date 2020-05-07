@@ -23,8 +23,7 @@ f_seq = ""
 r_seq = ""
 for seq_record in fasta_parsed:
     f_seq = str(seq_record.seq)
-    r_seq = str(seq_record.reverse_complement().seq)
-    r_seq = r_seq[::-1] # reverse of reverse complement
+    r_seq = str(seq_record.reverse_complement().seq)[::-1] # reverse of reverse complement
     for index, row in gff_df.iterrows():
         if row['seqid'] == seq_record.id:
             if row['strand'] == "+":

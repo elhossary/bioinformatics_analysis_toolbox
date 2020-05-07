@@ -39,11 +39,9 @@ if args.plot_type == "bar":
     else:
         #all_sources = csv_df.source.unique().tolist()
         x_axis = list(set(csv_df[args.data_column].values.tolist()))
-
-    heights = []
-    for i in x_axis:
-        heights.append(csv_df[args.data_column].values.tolist().count(i))
-
+        heights = []
+        for i in x_axis:
+            heights.append(csv_df[args.data_column].values.tolist().count(i))
     plt.xticks(x_axis)
     step = 1
     if int(max(heights) / 20) < 1:
