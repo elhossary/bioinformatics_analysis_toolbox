@@ -2,8 +2,19 @@ import pandas as pd
 import argparse
 import os
 import matplotlib.pyplot as plt
-
+import numpy as np
 # Param
+
+def autolabel(rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{}'.format(height),
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--csv_in", required=True, help="", type=str)
 parser.add_argument("--data_column", required=False, help="", type=str)
@@ -29,7 +40,8 @@ if args.plot_type == "hist":
     plt.grid(True)
     fig.savefig(f"{os.path.abspath(args.file_out)}")
 if args.plot_type == "bar":
-    fig = plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(16, 9))
+    all_sources = list(set(csv_df['source'].values.tolist()))
     if args.source != 'all':
         x_axis = list(set(csv_df[csv_df['source'] == args.source][args.data_column].values.tolist()))
         heights = []
@@ -37,7 +49,7 @@ if args.plot_type == "bar":
             heights.append(csv_df[csv_df['source'] == args.source][args.data_column].values.tolist().count(i))
 
     else:
-        #all_sources = csv_df.source.unique().tolist()
+
         x_axis = list(set(csv_df[args.data_column].values.tolist()))
         heights = []
         for i in x_axis:
