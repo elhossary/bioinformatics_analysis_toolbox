@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--refseq_in", required=True, help="", type=str)
 parser.add_argument("--end_range", default=10, required=False, help="", type=int)
+parser.add_argument("--offset", default=5, required=False, help="", type=int)
 parser.add_argument("--gff_out", required=True, help="", type=str)
 args = parser.parse_args()
 fasta_parsed = SeqIO.parse(path.abspath(args.refseq_in), "fasta")
@@ -35,15 +36,17 @@ for seq_record in fasta_parsed:
     for index, row in gff_df.iterrows():
         if row['seqid'] == seq_record.id:
             f_seq = str(seq_record.seq)
-            r_seq = str(seq_record.reverse_complement().seq)
+            r_seq = str(seq_record.reverse_complement().seq)[::-1] # reverse of reverse_complement
         else:
             continue
         if row['strand'] == "+":
-            t_count = f_seq[int(row['end']) - args.end_range:int(row['end'])].count("T")
-            longest_t_count = get_longest_continuous_t(f_seq[int(row['start']):int(row['end'])])
+            seq = f_seq[int(row['end']) - args.end_range:int(row['end']) + args.offset]
+            t_count = seq.count("T")
+            longest_t_count = get_longest_continuous_t(seq)
         elif row['strand'] == "-":
-            t_count = r_seq[int(row['start']):int(row['start']) + args.end_range].count("T")
-            longest_t_count = get_longest_continuous_t(r_seq[int(row['start']):int(row['end'])])
+            seq = r_seq[int(row['start']) - args.offset:int(row['start']) + args.end_range]
+            t_count = seq.count("T")
+            longest_t_count = get_longest_continuous_t(seq)
         else:
             print("Fatal error")
         str_out += \
