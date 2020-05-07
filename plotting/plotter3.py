@@ -26,7 +26,7 @@ elif args.hist_type == "overlaid":
         plt.hist(lists[k], bins, alpha=0.5, label=k, color=colors[index])
 plt.legend(prop={'size': 10})
 plt.title(f"{args.data_column.replace('_', ' ')} absolute distribution ({args.hist_type})")
-plt.xlabel(f"Energy value (Kcal/mol)")
+plt.xlabel(f"Minimum free energy (kcal/mol)")
 plt.ylabel("Frequency")
 #plt.xticks(range(0, 31, 1))
 #plt.yticks(range(0, 7, 1))
