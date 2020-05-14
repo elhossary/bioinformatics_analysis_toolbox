@@ -32,7 +32,7 @@ for seq_record in fasta_parsed:
                 if start < int(row['start']):
                     start = int(row['start'])
                 seq = f_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['name']}"\
+                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
                                  f":(+)_from_{start}_to_{end}\n{seq}\n"
             elif row['strand'] == "-":
                 start = int(row['start']) - args.offset - 1
@@ -40,7 +40,7 @@ for seq_record in fasta_parsed:
                 if int(row['end']) < end:
                     end = int(row['end'])
                 seq = r_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['name']}"\
+                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
                                  f":(-)_from_{start}_to_{end}\n{seq[::-1]}\n"
             else:
                 print("Fatal error")

@@ -39,7 +39,7 @@ def main():
                 longest_t_count = get_longest_continuous_t(seq)
                 for item in energy_values_list:
                     if row['seqid'] in item[0] and "+" in item[0] and \
-                            parse_attributes(row['attributes'])['name'] in item[0] and \
+                            parse_attributes(row['attributes'])['id'] in item[0] and \
                             seq.replace("T", "U") in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
                         break
@@ -49,7 +49,7 @@ def main():
                 longest_t_count = get_longest_continuous_t(seq)
                 for item in energy_values_list:
                     if row['seqid'] in item[0] and "-" in item[0] and \
-                            parse_attributes(row['attributes'])['name'] in item[0] and \
+                            parse_attributes(row['attributes'])['id'] in item[0] and \
                             seq.replace("T", "U")[::-1] in item[1]:
                         energy_value = item[2].split(' ')[-1].replace('(', '').replace(')', '')
                         break
