@@ -15,7 +15,7 @@ parser.add_argument("--file_out", required=True, help="", type=str)
 args = parser.parse_args()
 csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#")
 all_sources = list(set(csv_df['source'].values.tolist()))
-sns.set(rc={'figure.figsize':(8, 6)})
+sns.set(rc={'figure.figsize':(16, 9)})
 if args.classes_column is None:
     fig = sns.scatterplot(data=csv_df, x=args.x_column, y=args.y_column, hue='source',
                           palette='husl').set_title(f"{args.x_column} vs. {args.y_column} per class")
