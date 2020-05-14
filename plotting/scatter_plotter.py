@@ -18,8 +18,8 @@ all_sources = list(set(csv_df['source'].values.tolist()))
 sns.set(rc={'figure.figsize':(16, 9)})
 if args.classes_column is None:
     fig = sns.scatterplot(data=csv_df, x=args.x_column, y=args.y_column, hue='source',
-                          palette='husl').set_title(f"{args.x_column} vs. {args.y_column} per class")
+                          palette='husl').set_title(f"{args.x_column} vs. {args.y_column} per class".replace("_", ""))
 else:
     fig = sns.scatterplot(data=csv_df[csv_df['source'] == args.classes_column], x=args.x_column, y=args.y_column,
-                          palette='husl').set_title(f"{args.x_column} vs. {args.y_column}")
+                          palette='husl').set_title(f"{args.x_column} vs. {args.y_column}".replace("_", ""))
 fig.figure.savefig(f"{os.path.abspath(args.file_out)}")
