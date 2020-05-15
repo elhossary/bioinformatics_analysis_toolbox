@@ -51,4 +51,5 @@ if args.scale_columns is not None:
 
 if args.type == "csv":
     gff_df.to_csv(args.file_out, sep="\t", header=True, index=False)
-
+elif args.type == "excel":
+    gff_df.to_excel(args.file_out, header=True, index=False)
