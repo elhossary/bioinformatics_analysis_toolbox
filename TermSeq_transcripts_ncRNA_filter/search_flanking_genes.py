@@ -23,6 +23,11 @@ for index, gff_row in gff_df.iterrows():
     upstream_distance = 0
     upstream_gene = ""
     overlapping_genes = ""
+    r_downstream_distance = 0
+    r_downstream_gene = ""
+    r_upstream_distance = 0
+    r_upstream_gene = ""
+
     if gff_row["strand"] == "+":
         tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "+") & (ref_df["type"] == "gene") &
                      (ref_df["start"] >= gff_row["end"])].sort_values(["start"]).head(1)
@@ -32,6 +37,15 @@ for index, gff_row in gff_df.iterrows():
         else:
             downstream_gene = "#"
             downstream_distance = 0
+        tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "-") & (ref_df["type"] == "gene") &
+                     (ref_df["start"] >= gff_row["end"])].sort_values(["start"]).head(1)
+        if not tmp.empty:
+            r_downstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
+            r_downstream_distance = tmp.iloc[0]['start'] - gff_row["end"]
+        else:
+            r_downstream_gene = "#"
+            r_downstream_distance = 0
+
         tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "+") & (ref_df["type"] == "gene") &
                      (ref_df["end"] <= gff_row["start"])].sort_values(["end"], ascending=False).head(1)
         if not tmp.empty:
@@ -40,6 +54,16 @@ for index, gff_row in gff_df.iterrows():
         else:
             upstream_gene = "#"
             upstream_distance = 0
+
+        tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "-") & (ref_df["type"] == "gene") &
+                     (ref_df["end"] <= gff_row["start"])].sort_values(["end"], ascending=False).head(1)
+        if not tmp.empty:
+            r_upstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
+            r_upstream_distance = gff_row["start"] - tmp.iloc[0]['end']
+        else:
+            r_upstream_gene = "#"
+            r_upstream_distance = 0
+
         tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "+") & (ref_df["type"] == "gene") &
                      (((ref_df["start"] <= gff_row["start"]) & (gff_row["start"] <= ref_df["end"])) |
                       ((ref_df["start"] <= gff_row["end"]) & (gff_row["end"] <= ref_df["end"])))]
@@ -60,6 +84,14 @@ for index, gff_row in gff_df.iterrows():
         else:
             downstream_gene = "#"
             downstream_distance = 0
+        tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "+") & (ref_df["type"] == "gene") &
+                     (ref_df["end"] <= gff_row["start"])].sort_values(["end"], ascending=False).head(1)
+        if not tmp.empty:
+            r_downstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
+            r_downstream_distance = gff_row["start"] - tmp.iloc[0]['end']
+        else:
+            r_downstream_gene = "#"
+            r_downstream_distance = 0
         tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "-") & (ref_df["type"] == "gene") &
                      (ref_df["start"] >= gff_row["end"])].sort_values(["start"]).head(1)
         if not tmp.empty:
@@ -68,6 +100,15 @@ for index, gff_row in gff_df.iterrows():
         else:
             upstream_gene = "#"
             upstream_distance = 0
+
+        tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "+") & (ref_df["type"] == "gene") &
+                     (ref_df["start"] >= gff_row["end"])].sort_values(["start"]).head(1)
+        if not tmp.empty:
+            r_upstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
+            r_upstream_distance = tmp.iloc[0]['start'] - gff_row["end"]
+        else:
+            r_upstream_gene = "#"
+            r_upstream_distance = 0
         tmp = ref_df[(ref_df["seqid"] == gff_row["seqid"]) & (ref_df["strand"] == "-") & (ref_df["type"] == "gene") &
                      (((ref_df["start"] <= gff_row["start"]) & (gff_row["start"] <= ref_df["end"])) |
                       ((ref_df["start"] <= gff_row["end"]) & (gff_row["end"] <= ref_df["end"])))]
@@ -83,9 +124,11 @@ for index, gff_row in gff_df.iterrows():
         print("Fatal error")
         exit()
 
-    tmp_str = f";upstream_gene={upstream_gene};upstream_gene_distance={upstream_distance}" \
-              f";downstream_gene={downstream_gene};downstream_gene_distance={downstream_distance}" \
-              f";overlapping_genes={overlapping_genes}"
+    tmp_str = f";up_gene={upstream_gene};up_gene_dist={upstream_distance}" \
+              f";down_gene={downstream_gene};down_gene_dist={downstream_distance}" \
+              f";overlapping_genes={overlapping_genes}" \
+              f";opp_up_gene={r_upstream_gene};opp_up_gene_dist={r_upstream_distance}" \
+              f";opp_down_gene={r_downstream_gene};opp_down_gene_dist={r_downstream_distance}"
     str_out += \
         f"{gff_row['seqid']}\t" + \
         f"{gff_row['source']}\t" + \
@@ -101,3 +144,4 @@ print("Writing GFF file...")
 outfile = open(path.abspath(args.gff_out), "w")
 outfile.write(f"{str_out}")
 outfile.close()
+exit()
