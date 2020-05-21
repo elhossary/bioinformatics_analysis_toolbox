@@ -82,6 +82,7 @@ for index, gff_row in gff_df.iterrows():
     else:
         print("Fatal error")
         exit()
+
     tmp_str = f";upstream_gene={upstream_gene};upstream_gene_distance={upstream_distance}" \
               f";downstream_gene={downstream_gene};downstream_gene_distance={downstream_distance}" \
               f";overlapping_genes={overlapping_genes}"
