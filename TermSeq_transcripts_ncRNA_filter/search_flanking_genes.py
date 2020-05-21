@@ -35,7 +35,7 @@ for index, gff_row in gff_df.iterrows():
         if not tmp.empty:
             downstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
             downstream_distance = tmp.iloc[0]['start'] - gff_row["end"]
-            if tmp.iloc[0]['start'] == "+":
+            if tmp.iloc[0]['strand'] == "+":
                 downstream_gene_strand = "same"
             else:
                 downstream_gene_strand = "opposite"
@@ -45,7 +45,7 @@ for index, gff_row in gff_df.iterrows():
         if not tmp.empty:
             upstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
             upstream_distance = gff_row["start"] - tmp.iloc[0]['end']
-            if tmp.iloc[0]['start'] == "+":
+            if tmp.iloc[0]['strand'] == "+":
                 upstream_gene_strand = "same"
             else:
                 upstream_gene_strand = "opposite"
@@ -67,7 +67,7 @@ for index, gff_row in gff_df.iterrows():
         if not tmp.empty:
             downstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
             downstream_distance = gff_row["start"] - tmp.iloc[0]['end']
-            if tmp.iloc[0]['start'] == "-":
+            if tmp.iloc[0]['strand'] == "-":
                 downstream_gene_strand = "same"
             else:
                 downstream_gene_strand = "opposite"
@@ -77,7 +77,7 @@ for index, gff_row in gff_df.iterrows():
         if not tmp.empty:
             upstream_gene = parse_attributes(tmp.iloc[0]['attributes'])["name"]
             upstream_distance = tmp.iloc[0]['start'] - gff_row["end"]
-            if tmp.iloc[0]['start'] == "-":
+            if tmp.iloc[0]['strand'] == "-":
                 upstream_gene_strand = "same"
             else:
                 upstream_gene_strand = "opposite"
