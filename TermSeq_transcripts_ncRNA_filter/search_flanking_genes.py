@@ -85,8 +85,8 @@ for index, gff_row in gff_df.iterrows():
         print("Fatal error")
         exit()
 
-    tmp_str = f";up_gene={upstream_gene};up_gene_dist={upstream_distance};up_gene_strand={upstream_gene_strand}" \
-              f";down_gene={downstream_gene};down_gene_dist={downstream_distance};down_gene_strand={downstream_gene_strand}" \
+    tmp_str = f";up_flank={upstream_gene};up_flank_dist={upstream_distance};up_flank_strand={upstream_gene_strand}" \
+              f";down_flank={downstream_gene};down_flank_dist={downstream_distance};down_flank_strand={downstream_gene_strand}" \
               f";overlapping_genes={overlapping_genes}"
     str_out += \
         f"{gff_row['seqid']}\t" + \
