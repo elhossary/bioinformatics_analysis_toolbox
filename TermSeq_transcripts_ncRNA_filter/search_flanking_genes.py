@@ -86,16 +86,16 @@ for index, gff_row in gff_df.iterrows():
               f";downstream_gene={downstream_gene};downstream_gene_distance={downstream_distance}" \
               f";overlapping_genes={overlapping_genes}"
     str_out += \
-            f"{gff_row['seqid']}\t" + \
-            f"{gff_row['source']}\t" + \
-            f"{gff_row['type']}\t" + \
-            f"{int(gff_row['start'])}\t" + \
-            f"{int(gff_row['end'])}\t" + \
-            f"{gff_row['score']}\t" + \
-            f"{gff_row['strand']}\t" + \
-            f"{gff_row['phase']}\t" + \
-            f"{gff_row['attributes']}{tmp_str}" + \
-            "\n"
+        f"{gff_row['seqid']}\t" + \
+        f"{gff_row['source']}\t" + \
+        f"{gff_row['type']}\t" + \
+        f"{int(gff_row['start'])}\t" + \
+        f"{int(gff_row['end'])}\t" + \
+        f"{gff_row['score']}\t" + \
+        f"{gff_row['strand']}\t" + \
+        f"{gff_row['phase']}\t" + \
+        f"{gff_row['attributes']}{tmp_str}" + \
+        "\n"
 print("Writing GFF file...")
 outfile = open(path.abspath(args.gff_out), "w")
 outfile.write(f"{str_out}")
