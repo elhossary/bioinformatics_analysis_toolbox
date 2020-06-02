@@ -55,27 +55,23 @@ for i in gff_df.index.tolist():
             tmp_lst_after.append(f_wiggles_matrix[(f_wiggles_matrix["seqid"] == tss_seqid) &
                                                   (f_wiggles_matrix["location"].between
                                                    (tss_loc + 1, tss_loc + args.step_range))][cond].mean())
-
             tmp_lst_before.append(f_wiggles_matrix[(f_wiggles_matrix["seqid"] == tss_seqid) &
                                                    (f_wiggles_matrix["location"].between
                                                     (tss_loc - args.step_range, tss_loc - 1))][cond].mean())
         average_score_after = mean(tmp_lst_after)
         average_score_before = mean(tmp_lst_before)
-
         if average_score_before > 0 < average_score_after:
             step_factor = average_score_after / average_score_before
             step_height = average_score_after - average_score_before
         else:
             step_factor = 0
             step_height = 0
-
     elif tss_strand == "-":
         tss_loc = gff_df.at[i, "end"]
         for cond in r_wiggles_cond:
             tmp_lst_before.append(r_wiggles_matrix[(r_wiggles_matrix["seqid"] == tss_seqid) &
                                                    (r_wiggles_matrix["location"].between
                                                    (tss_loc + 1, tss_loc + args.step_range))][cond].mean())
-
             tmp_lst_after.append(r_wiggles_matrix[(r_wiggles_matrix["seqid"] == tss_seqid) &
                                                   (r_wiggles_matrix["location"].between
                                                    (tss_loc - args.step_range, tss_loc))][cond].mean())
@@ -90,7 +86,6 @@ for i in gff_df.index.tolist():
     else:
         print("Fatal error: strand orientation problem")
         exit(1)
-    gff_df.at[i, "attributes"] += f";ave_stepHeight={step_height};ave_stepFactor={step_factor}"
     str_out += \
         f"{gff_df.at[i, 'seqid']}\t" + \
         f"{gff_df.at[i, 'source']}\t" + \
@@ -100,7 +95,7 @@ for i in gff_df.index.tolist():
         f"{gff_df.at[i, 'score']}\t" + \
         f"{gff_df.at[i, 'strand']}\t" + \
         f"{gff_df.at[i, 'phase']}\t" + \
-        f"{gff_df.at[i, 'attributes']}" + \
+        f"{gff_df.at[i, 'attributes']};ave_stepHeight={step_height};ave_stepFactor={step_factor}" + \
         "\n"
 print("\nWriting GFF file...")
 outfile = open(os.path.abspath(args.gff_out), "w")
