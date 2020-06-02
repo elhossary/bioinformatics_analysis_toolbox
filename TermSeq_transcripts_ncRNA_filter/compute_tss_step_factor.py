@@ -50,8 +50,8 @@ for i in gff_df.index.tolist():
         for cond in r_wiggles_cond:
             tmp_lst_before.append(r_wiggles_matrix[r_wiggles_matrix.seqid == tss_seqid].loc[tss_loc + 1:tss_loc + args.step_range, cond].mean())
             tmp_lst_after.append(r_wiggles_matrix[r_wiggles_matrix.seqid == tss_seqid].loc[tss_loc - args.step_range:tss_loc - 1, cond].mean())
-        average_score_after = mean(abs(tmp_lst_after))
-        average_score_before = mean(abs(tmp_lst_before))
+        average_score_after = mean([abs(v) for v in tmp_lst_after])
+        average_score_before = mean([abs(v) for v in tmp_lst_before])
         if average_score_after > 0 and average_score_before > 0:
             step_factor = average_score_after / average_score_before
             step_height = average_score_after - average_score_before
