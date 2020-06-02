@@ -88,8 +88,8 @@ for i in gff_df.index.tolist():
             step_factor = 0
             step_height = 0
     else:
-        print("Fatal error")
-        exit()
+        print("Fatal error: strand orientation problem")
+        exit(1)
     gff_df.at[i, "attributes"] += f";ave_stepHeight={step_height};ave_stepFactor={step_factor}"
     str_out += \
         f"{gff_df.at[i, 'seqid']}\t" + \
@@ -106,4 +106,4 @@ print("\nWriting GFF file...")
 outfile = open(os.path.abspath(args.gff_out), "w")
 outfile.write(f"{str_out}")
 outfile.close()
-exit()
+exit(0)
