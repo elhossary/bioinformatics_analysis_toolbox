@@ -3,8 +3,19 @@ import pandas as pd
 from os import path
 from sklearn import preprocessing
 
+
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
+
+
+def add_excluded_values(df, exclude_list):
+    exclude_list = ["scaled_" + item for item in exclude_list]
+    cols = [col for col in df.columns.tolist() if col not in exclude_list]
+    col_name = ""
+    for c in cols:
+        col_name += "_" + c.replace("scaled_", "")
+    df[f"combined_score{col_name}"] = df[cols].sum(axis=1)
+    return df
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
@@ -36,12 +47,7 @@ if args.scale_columns is not None:
                                  columns=scaled_columns)
         scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
         if args.combine_exclude is not None:
-            args.combine_exclude = ["scaled_" + item for item in args.combine_exclude]
-            cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
-            col_name = ""
-            for exclude in args.combine_exclude:
-                col_name += "_" + exclude.replace("scaled_", "")
-            scaled_df[f"score_excluded{col_name}"] = scaled_df[cols].sum(axis=1)
+            scaled_df = add_excluded_values(scaled_df, args.combine_exclude)
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
     else:
         scaler = preprocessing.MinMaxScaler()
@@ -55,12 +61,7 @@ if args.scale_columns is not None:
         scaled_df.reset_index(inplace=True)
         scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
         if args.combine_exclude is not None:
-            args.combine_exclude = ["scaled_" + item for item in args.combine_exclude]
-            cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
-            col_name = ""
-            for exclude in args.combine_exclude:
-                col_name += "_" + exclude.replace("scaled_", "")
-            scaled_df[f"score_excluded{col_name}"] = scaled_df[cols].sum(axis=1)
+            scaled_df = add_excluded_values(scaled_df, args.combine_exclude)
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
 
 gff_df = gff_df.round(2)
