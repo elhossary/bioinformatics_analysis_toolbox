@@ -51,6 +51,7 @@ if args.scale_columns is not None:
 
 for col in scaled_columns:
     gff_df[col] = gff_df[col].round(2)
+print(gff_df.head().to_string())
 if args.type == "csv":
     gff_df.to_csv(args.file_out, sep="\t", header=True, index=False)
 elif args.type == "excel":
