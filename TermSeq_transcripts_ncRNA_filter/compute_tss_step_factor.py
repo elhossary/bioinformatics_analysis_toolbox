@@ -101,7 +101,8 @@ for i in gff_df.index.tolist():
         f"{gff_df.at[i, 'score']}\t" + \
         f"{gff_df.at[i, 'strand']}\t" + \
         f"{gff_df.at[i, 'phase']}\t" + \
-        f"{gff_df.at[i, 'attributes']};ave_step_height={step_height};ave_step_factor={step_factor}" + \
+        f"{gff_df.at[i, 'attributes']}"\
+        f";ave_step_height={round(step_height, 2)};ave_step_factor={round(step_factor, 2)}" + \
         "\n"
 print("\nWriting GFF file...")
 outfile = open(os.path.abspath(args.gff_out), "w")
