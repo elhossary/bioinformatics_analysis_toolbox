@@ -38,8 +38,12 @@ for i in gff_df[gff_df["strand"] == "-"]["end"].values.tolist():
         r_slicing_lst.append(i - step)
     #r_slicing_lst.append(i)
 r_slicing_lst.sort()
-f_wiggles_matrix = f_wiggles_matrix[f_wiggles_matrix["location"].isin(f_slicing_lst)]
-r_wiggles_matrix = r_wiggles_matrix[r_wiggles_matrix["location"].isin(r_slicing_lst)]
+needed_seqid_list = gff_df["seqid"].unique()
+# Slice unneeded seqids and locations
+f_wiggles_matrix = f_wiggles_matrix[(f_wiggles_matrix["location"].isin(f_slicing_lst)) &
+                                    (f_wiggles_matrix["seqid"].isin(needed_seqid_list))]
+r_wiggles_matrix = r_wiggles_matrix[(r_wiggles_matrix["location"].isin(r_slicing_lst)) &
+                                    (r_wiggles_matrix["seqid"].isin(needed_seqid_list))]
 ###########
 # Generating conditions average column
 f_wiggles_matrix["cond_mean"] = f_wiggles_matrix.loc[:, f_wiggles_cond].mean(axis=1)
