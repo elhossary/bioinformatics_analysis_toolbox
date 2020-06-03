@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gff_in", required=True, help="", type=str)
     parser.add_argument("--refseq_in", required=True, help="", type=str)
+    parser.add_argument("--tss_in", required=False, help="", type=str)
     parser.add_argument("--energy_values_in", required=True, help="", type=str)
     parser.add_argument("--end_range", default=10, required=False, help="", type=int)
     parser.add_argument("--offset", default=5, required=False, help="", type=int)
@@ -21,10 +22,15 @@ def main():
 
     f_seq = ""
     r_seq = ""
+    step_factor = 0
+    step_height = 0
     t_count = 0
     longest_t_count = 0
     energy_values_list = parse_energy_values_file(args.energy_values_in)
-
+    if args.tss_in is not None:
+        tss_df = pd.read_csv(path.abspath(args.tss_in), names=col_names, sep="\t", comment="#")
+    else:
+        tss_df = None
     for seq_record in fasta_parsed:
         for index, row in gff_df.iterrows():
             if row['seqid'] == seq_record.id:
@@ -55,6 +61,19 @@ def main():
                         break
             else:
                 print("Fatal error")
+            if tss_df is not None:
+                tmp = tss_df[(tss_df["seqid"] == row['seqid']) &
+                             (tss_df["strand"] == row['strand']) &
+                             (tss_df["start"].between(row['start'], row['end']))]["attributes"].values.tolist()
+                if len(tmp) == 1:
+                    step_factor = parse_attributes(tmp[0])["ave_stepFactor"]
+                    step_height = parse_attributes(tmp[0])["ave_stepHeight"]
+                elif len(tmp) == 0:
+                    step_factor = 0
+                    step_height = 0
+                else:
+                    step_factor, step_height = get_strongest_tss_from_attrib(tmp)
+
             str_out += \
                 f"{row['seqid']}\t" + \
                 f"{row['source']}\t" + \
@@ -69,6 +88,8 @@ def main():
                 f";last_{args.end_range}_bases_T_count={t_count}" + \
                 f";longest_continuous_T={longest_t_count}" + \
                 f";energy_value={energy_value}" + \
+                f";ave_stepHeight={step_height}" + \
+                f";ave_stepFactor={step_factor}" + \
                 "\n"
     print("Writing GFF file...")
     outfile = open(path.abspath(args.gff_out), "w")
@@ -98,6 +119,11 @@ def parse_energy_values_file(path_str):
             tmp = ""
             counter = 0
     return energy_values_list
+
+
+def get_strongest_tss_from_attrib(lst_in):
+    lst_in = [parse_attributes(item) for item in lst_in]
+    return max([int(x['ave_stepFactor']) for x in lst_in]), max([int(x['ave_stepHeight']) for x in lst_in])
 
 
 def parse_attributes(attr_str):
