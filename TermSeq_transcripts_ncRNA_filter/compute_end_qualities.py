@@ -65,9 +65,10 @@ def main():
                 tmp = tss_df[(tss_df["seqid"] == row['seqid']) &
                              (tss_df["strand"] == row['strand']) &
                              (tss_df["start"].between(row['start'], row['end']))]["attributes"].values.tolist()
+
                 if len(tmp) == 1:
-                    step_factor = parse_attributes(tmp[0])["ave_stepFactor"]
-                    step_height = parse_attributes(tmp[0])["ave_stepHeight"]
+                    step_factor = parse_attributes(tmp[0])["ave_stepfactor"]
+                    step_height = parse_attributes(tmp[0])["ave_stepheight"]
                 elif len(tmp) == 0:
                     step_factor = 0
                     step_height = 0
@@ -123,7 +124,7 @@ def parse_energy_values_file(path_str):
 
 def get_strongest_tss_from_attrib(lst_in):
     lst_in = [parse_attributes(item) for item in lst_in]
-    return max([int(x['ave_stepFactor']) for x in lst_in]), max([int(x['ave_stepHeight']) for x in lst_in])
+    return max([int(x['ave_stepfactor']) for x in lst_in]), max([int(x['ave_stepheight']) for x in lst_in])
 
 
 def parse_attributes(attr_str):
