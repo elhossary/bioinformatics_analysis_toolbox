@@ -9,7 +9,8 @@ def parse_attributes(attr_str):
 
 
 def add_excluded_values(df, exclude_list):
-    exclude_list = ["scaled_" + item for item in exclude_list].append("combined_all_scores")
+    exclude_list = ["scaled_" + item for item in exclude_list]
+    exclude_list.append("combined_all_scores")
     cols = [col for col in df.columns.tolist() if col not in exclude_list]
     col_name = ""
     for c in cols:
