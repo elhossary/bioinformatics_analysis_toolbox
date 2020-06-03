@@ -17,28 +17,37 @@ col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phas
 gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
 wiggle_pathes = []
 str_out = ""
-args.step_range += 1
 for item in args.wiggle_files:
     for sub_item in glob.glob(item):
         wiggle_pathes.append(os.path.abspath(sub_item))
 f_wiggles_matrix, r_wiggles_matrix = WiggleMatrix(args.fasta_in, wiggle_pathes).get_matrix_by_orientation()
 f_wiggles_cond = [col for col in f_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 r_wiggles_cond = [col for col in r_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
-
+# minimize the pandas dataframe size for faster processing
 f_slicing_lst = []
 r_slicing_lst = []
+args.step_range += 1
 for i in gff_df[gff_df["strand"] == "+"]["start"].values.tolist():
     for step in range(1, args.step_range, 1):
         f_slicing_lst.append(i + step)
         f_slicing_lst.append(i - step)
+    #f_slicing_lst.append(i)
 f_slicing_lst.sort()
 for i in gff_df[gff_df["strand"] == "-"]["end"].values.tolist():
     for step in range(1, args.step_range, 1):
         r_slicing_lst.append(i + step)
         r_slicing_lst.append(i - step)
+    #r_slicing_lst.append(i)
 r_slicing_lst.sort()
 f_wiggles_matrix = f_wiggles_matrix[f_wiggles_matrix["location"].isin(f_slicing_lst)]
 r_wiggles_matrix = r_wiggles_matrix[r_wiggles_matrix["location"].isin(r_slicing_lst)]
+###########
+# Generating conditions average column
+f_wiggles_matrix["cond_mean"] = f_wiggles_matrix.loc[:, f_wiggles_cond].mean(axis=1)
+r_wiggles_matrix["cond_mean"] = r_wiggles_matrix.loc[:, r_wiggles_cond].mean(axis=1)
+# Converting the needed columns of matrix dataframe to numpy array for faster processing
+f_wiggles_matrix = f_wiggles_matrix.loc[:, ["seqid", "location", "cond_mean"]].to_numpy()
+r_wiggles_matrix = r_wiggles_matrix.loc[:, ["seqid", "location", "cond_mean"]].to_numpy()
 gff_len = gff_df.shape[0]
 for i in gff_df.index.tolist():
     sys.stdout.flush()
@@ -51,15 +60,12 @@ for i in gff_df.index.tolist():
     step_height = 0
     if tss_strand == "+":
         tss_loc = gff_df.at[i, "start"]
-        for cond in f_wiggles_cond:
-            tmp_lst_after.append(f_wiggles_matrix[(f_wiggles_matrix["seqid"] == tss_seqid) &
-                                                  (f_wiggles_matrix["location"].between
-                                                   (tss_loc + 1, tss_loc + args.step_range))][cond].mean())
-            tmp_lst_before.append(f_wiggles_matrix[(f_wiggles_matrix["seqid"] == tss_seqid) &
-                                                   (f_wiggles_matrix["location"].between
-                                                    (tss_loc - args.step_range, tss_loc - 1))][cond].mean())
-        average_score_after = mean(tmp_lst_after)
-        average_score_before = mean(tmp_lst_before)
+        average_score_after = f_wiggles_matrix[(f_wiggles_matrix[:, 0] == tss_seqid) &
+                                               (f_wiggles_matrix[:, 1] >= tss_loc + 1) &
+                                               (f_wiggles_matrix[:, 1] <= tss_loc + args.step_range)][:, 2].mean()
+        average_score_before = f_wiggles_matrix[(f_wiggles_matrix[:, 0] == tss_seqid) &
+                                                (f_wiggles_matrix[:, 1] >= tss_loc - args.step_range) &
+                                                (f_wiggles_matrix[:, 1] <= tss_loc - 1)][:, 2].mean()
         if average_score_before > 0 < average_score_after:
             step_factor = average_score_after / average_score_before
             step_height = average_score_after - average_score_before
@@ -68,15 +74,12 @@ for i in gff_df.index.tolist():
             step_height = 0
     elif tss_strand == "-":
         tss_loc = gff_df.at[i, "end"]
-        for cond in r_wiggles_cond:
-            tmp_lst_before.append(r_wiggles_matrix[(r_wiggles_matrix["seqid"] == tss_seqid) &
-                                                   (r_wiggles_matrix["location"].between
-                                                   (tss_loc + 1, tss_loc + args.step_range))][cond].mean())
-            tmp_lst_after.append(r_wiggles_matrix[(r_wiggles_matrix["seqid"] == tss_seqid) &
-                                                  (r_wiggles_matrix["location"].between
-                                                   (tss_loc - args.step_range, tss_loc))][cond].mean())
-        average_score_after = mean([abs(v) for v in tmp_lst_after])
-        average_score_before = mean([abs(v) for v in tmp_lst_before])
+        average_score_before = abs(r_wiggles_matrix[(r_wiggles_matrix[:, 0] == tss_seqid) &
+                                                    (r_wiggles_matrix[:, 1] >= tss_loc + 1) &
+                                                    (r_wiggles_matrix[:, 1] <= tss_loc + args.step_range)][:, 2].mean())
+        average_score_after = abs(r_wiggles_matrix[(r_wiggles_matrix[:, 0] == tss_seqid) &
+                                                   (r_wiggles_matrix[:, 1] >= tss_loc - args.step_range) &
+                                                   (r_wiggles_matrix[:, 1] <= tss_loc - 1)][:, 2].mean())
         if average_score_before > 0 < average_score_after:
             step_factor = average_score_after / average_score_before
             step_height = average_score_after - average_score_before
