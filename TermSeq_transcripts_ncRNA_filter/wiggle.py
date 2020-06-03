@@ -13,7 +13,7 @@ class Wiggle:
         current_wiggle_meta = {}
         column_names = ["track_type", "track_name", "variableStep_chrom", "variableStep_span", "location", "score"]
         with open(self.file_path, "r") as raw_file:
-            print(f"Loaded file: {os.path.basename(self.file_path)}")
+            print(f"==> Loaded file: {os.path.basename(self.file_path)}")
             for line in raw_file.readlines():
                 if line[0].isnumeric():
                     tmp_list.append([current_wiggle_meta["track_type"],
@@ -25,9 +25,9 @@ class Wiggle:
                 else:
                     current_wiggle_meta = self.parse_wiggle_header(line, current_wiggle_meta)
                     if len(current_wiggle_meta.keys()) == 2:
-                        print(f"\tParsing condition: {current_wiggle_meta['track_name']}")
+                        print(f"===> Parsing condition: {current_wiggle_meta['track_name']}")
                     elif len(current_wiggle_meta.keys()) == 4:
-                        print(f"\t\t==> For sequence ID: {current_wiggle_meta['variableStep_chrom']}")
+                        print(f"====> For sequence ID: {current_wiggle_meta['variableStep_chrom']}")
                     else:
                         exit(1)
         self.ret_df = pd.DataFrame(tmp_list, columns=column_names)
