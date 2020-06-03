@@ -67,8 +67,8 @@ def main():
                              (tss_df["start"].between(row['start'], row['end']))]["attributes"].values.tolist()
 
                 if len(tmp) == 1:
-                    step_factor = parse_attributes(tmp[0])["ave_stepfactor"]
-                    step_height = parse_attributes(tmp[0])["ave_stepheight"]
+                    step_factor = parse_attributes(tmp[0])["ave_step_factor"]
+                    step_height = parse_attributes(tmp[0])["ave_step_height"]
                 elif len(tmp) == 0:
                     step_factor = 0
                     step_height = 0
@@ -89,8 +89,8 @@ def main():
                 f";last_{args.end_range}_bases_T_count={t_count}" + \
                 f";longest_continuous_T={longest_t_count}" + \
                 f";energy_value={energy_value}" + \
-                f";ave_stepHeight={step_height}" + \
-                f";ave_stepFactor={step_factor}" + \
+                f";ave_step_height={step_height}" + \
+                f";ave_step_factor={step_factor}" + \
                 "\n"
     print("Writing GFF file...")
     outfile = open(path.abspath(args.gff_out), "w")
@@ -124,7 +124,7 @@ def parse_energy_values_file(path_str):
 
 def get_strongest_tss_from_attrib(lst_in):
     lst_in = [parse_attributes(item) for item in lst_in]
-    return max([float(x['ave_stepfactor']) for x in lst_in]), max([float(x['ave_stepheight']) for x in lst_in])
+    return max([float(x['ave_step_factor']) for x in lst_in]), max([float(x['ave_step_height']) for x in lst_in])
 
 
 def parse_attributes(attr_str):
