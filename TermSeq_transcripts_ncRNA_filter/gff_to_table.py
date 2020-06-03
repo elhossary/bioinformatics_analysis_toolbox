@@ -49,8 +49,7 @@ if args.scale_columns is not None:
         scaled_df["combined_scores"] = scaled_df.sum(axis=1)
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
 
-for col in scaled_columns:
-    gff_df[col] = gff_df[col].astype(float).round(2)
+gff_df = gff_df.round(2)
 
 if args.type == "csv":
     gff_df.to_csv(args.file_out, sep="\t", header=True, index=False)
