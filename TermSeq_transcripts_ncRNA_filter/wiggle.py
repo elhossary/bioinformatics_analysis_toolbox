@@ -27,7 +27,7 @@ class Wiggle:
                     if len(current_wiggle_meta.keys()) == 2:
                         print(f"\tParsing condition: {current_wiggle_meta['track_name']}")
                     elif len(current_wiggle_meta.keys()) == 4:
-                        print(f"\t\tParsing coverage for sequence ID: {current_wiggle_meta['variableStep_chrom']}")
+                        print(f"\t\t==> For sequence ID: {current_wiggle_meta['variableStep_chrom']}")
                     else:
                         exit(1)
         self.ret_df = pd.DataFrame(tmp_list, columns=column_names)
