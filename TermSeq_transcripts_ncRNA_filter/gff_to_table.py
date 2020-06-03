@@ -11,6 +11,7 @@ parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--file_out", required=True, help="", type=str)
 parser.add_argument("--type", required=True, help="", type=str, choices=["csv", "excel"])
 parser.add_argument("--scale_columns", required=False, help="", type=str, nargs='+')
+parser.add_argument("--combine_exclude", required=False, help="", type=str, nargs='+')
 parser.add_argument("--classes_column", required=False, help="", type=str)
 args = parser.parse_args()
 
@@ -33,7 +34,13 @@ if args.scale_columns is not None:
         scaler = preprocessing.MinMaxScaler()
         scaled_df = pd.DataFrame(scaler.fit_transform(gff_df[args.scale_columns].astype(float).abs()),
                                  columns=scaled_columns)
-        scaled_df["combined_scores"] = scaled_df.sum(axis=1)
+        scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
+        if args.combine_exclude is not None:
+            cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
+            col_name = ""
+            for exclude in args.combine_exclude:
+                col_name += "_" + exclude.replace("scaled_", "")
+            scaled_df[f"score_excluded{col_name}"] = scaled_df[cols].sum(axis=1)
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
     else:
         scaler = preprocessing.MinMaxScaler()
@@ -46,7 +53,13 @@ if args.scale_columns is not None:
 
             scaled_df = scaled_df.append(tmp_df)
         scaled_df.reset_index(inplace=True)
-        scaled_df["combined_scores"] = scaled_df.sum(axis=1)
+        scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
+        if args.combine_exclude is not None:
+            cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
+            col_name = ""
+            for exclude in args.combine_exclude:
+                col_name += "_" + exclude.replace("scaled_", "")
+            scaled_df[f"score_excluded{col_name}"] = scaled_df[cols].sum(axis=1)
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
 
 gff_df = gff_df.round(2)
