@@ -54,7 +54,7 @@ r_wiggles_matrix = r_wiggles_matrix.loc[:, ["seqid", "location", "cond_mean"]].t
 gff_len = gff_df.shape[0]
 for i in gff_df.index.tolist():
     sys.stdout.flush()
-    sys.stdout.write("\r" + f"Computing TSS step height/factor progress: {round(i / gff_len * 100, 2)}%")
+    sys.stdout.write("\r" + f"Computing TSS step height/factor progress: {round(i / gff_len * 100)} %")
     tss_seqid = gff_df.at[i, "seqid"]
     tss_strand = gff_df.at[i, "strand"]
     tmp_lst_after = []
