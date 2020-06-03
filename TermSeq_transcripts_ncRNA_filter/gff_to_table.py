@@ -34,7 +34,7 @@ if args.scale_columns is not None:
         scaled_df = pd.DataFrame(scaler.fit_transform(gff_df[args.scale_columns].astype(float).abs()),
                                  columns=scaled_columns)
         scaled_df["combined_scores"] = scaled_df.sum(axis=1)
-        gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("").round(2)
+        gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
     else:
         scaler = preprocessing.MinMaxScaler()
         classes = list(set(gff_df['source'].values.tolist()))
@@ -47,8 +47,10 @@ if args.scale_columns is not None:
             scaled_df = scaled_df.append(tmp_df)
         scaled_df.reset_index(inplace=True)
         scaled_df["combined_scores"] = scaled_df.sum(axis=1)
-        gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("").round(2)
+        gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
 
+for col in scaled_columns:
+    gff_df[col] = gff_df[col].round(2)
 if args.type == "csv":
     gff_df.to_csv(args.file_out, sep="\t", header=True, index=False)
 elif args.type == "excel":
