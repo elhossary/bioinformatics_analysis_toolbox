@@ -24,9 +24,12 @@ class Wiggle:
                                      float(line.split(" ")[1].replace("\n", ""))])
                 else:
                     current_wiggle_meta = self.parse_wiggle_header(line, current_wiggle_meta)
-                    if len(current_wiggle_meta.keys()) == 4:
-                        print(f"\tParsing coverage of sequence ID: {current_wiggle_meta['variableStep_chrom']} "
-                              f"at condition: {current_wiggle_meta['track_name']}")
+                    if len(current_wiggle_meta.keys()) == 2:
+                        print(f"\tParsing condition: {current_wiggle_meta['track_name']}")
+                    elif len(current_wiggle_meta.keys()) == 4:
+                        print(f"\t\tParsing coverage for sequence ID: {current_wiggle_meta['variableStep_chrom']}")
+                    else:
+                        exit(1)
         self.ret_df = pd.DataFrame(tmp_list, columns=column_names)
         return self.ret_df
 
