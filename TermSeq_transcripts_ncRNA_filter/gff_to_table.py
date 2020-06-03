@@ -36,6 +36,7 @@ if args.scale_columns is not None:
                                  columns=scaled_columns)
         scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
         if args.combine_exclude is not None:
+            args.combine_exclude = ["scaled_" + item for item in args.combine_exclude]
             cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
             col_name = ""
             for exclude in args.combine_exclude:
@@ -50,11 +51,11 @@ if args.scale_columns is not None:
             tmp_df = pd.DataFrame(
                 scaler.fit_transform(gff_df[gff_df['source'] == item][args.scale_columns].astype(float).abs()),
                 columns=scaled_columns)
-
             scaled_df = scaled_df.append(tmp_df)
         scaled_df.reset_index(inplace=True)
         scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
         if args.combine_exclude is not None:
+            args.combine_exclude = ["scaled_" + item for item in args.combine_exclude]
             cols = [col for col in scaled_df.columns.tolist() if col not in args.combine_exclude]
             col_name = ""
             for exclude in args.combine_exclude:
