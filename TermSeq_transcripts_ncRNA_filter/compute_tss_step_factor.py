@@ -46,11 +46,11 @@ r_wiggles_matrix = r_wiggles_matrix[(r_wiggles_matrix["location"].isin(r_slicing
                                     (r_wiggles_matrix["seqid"].isin(needed_seqid_list))]
 ###########
 # Generating conditions average column
-f_wiggles_matrix["cond_max"] = f_wiggles_matrix.loc[:, f_wiggles_cond].max(axis=1)
-r_wiggles_matrix["cond_max"] = r_wiggles_matrix.loc[:, r_wiggles_cond].max(axis=1)
+f_wiggles_matrix["cond_mean"] = f_wiggles_matrix.loc[:, f_wiggles_cond].mean(axis=1)
+r_wiggles_matrix["cond_mean"] = r_wiggles_matrix.loc[:, r_wiggles_cond].mean(axis=1)
 # Converting the needed columns of matrix dataframe to numpy array for faster processing
-f_wiggles_matrix = f_wiggles_matrix.loc[:, ["seqid", "location", "cond_max"]].to_numpy()
-r_wiggles_matrix = r_wiggles_matrix.loc[:, ["seqid", "location", "cond_max"]].to_numpy()
+f_wiggles_matrix = f_wiggles_matrix.loc[:, ["seqid", "location", "cond_mean"]].to_numpy()
+r_wiggles_matrix = r_wiggles_matrix.loc[:, ["seqid", "location", "cond_mean"]].to_numpy()
 gff_len = gff_df.shape[0]
 for i in gff_df.index.tolist():
     sys.stdout.flush()
