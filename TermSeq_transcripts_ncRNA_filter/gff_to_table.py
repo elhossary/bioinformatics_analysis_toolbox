@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import numpy as np
 from os import path
 from sklearn import preprocessing
 
@@ -21,8 +22,9 @@ def add_excluded_values(df, exclude_list):
 parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--file_out", required=True, help="", type=str)
-parser.add_argument("--type", required=True, help="", type=str, choices=["csv", "excel"])
+parser.add_argument("--type", required=True, help="", type=str, choices=["csv", "excel", "both"])
 parser.add_argument("--scale_columns", required=False, help="", type=str, nargs='+')
+parser.add_argument("--log_columns", required=False, help="", type=str, nargs='+')
 parser.add_argument("--combine_exclude", required=False, help="", type=str, nargs='+')
 parser.add_argument("--classes_column", required=False, help="", type=str)
 args = parser.parse_args()
@@ -38,6 +40,11 @@ attr_df = pd.DataFrame(gff_df.attributes.values.tolist())
 attr_df.set_index("df_index", inplace=True)
 gff_df = pd.merge(left=gff_df, right=attr_df, left_index=True, right_index=True).fillna("")
 gff_df.drop(['index', 'attributes', 'score', 'phase'], axis=1, inplace=True)
+if args.log_columns is not None:
+    for log_col in args.log_columns:
+        gff_df[f"{log_col}_no_log"] = gff_df[log_col]
+        gff_df[log_col] = np.log10(gff_df[log_col])
+
 scaled_columns = []
 if args.scale_columns is not None:
     for column in args.scale_columns:
@@ -68,6 +75,9 @@ if args.scale_columns is not None:
 gff_df = gff_df.round(2)
 
 if args.type == "csv":
-    gff_df.to_csv(args.file_out, sep="\t", header=True, index=False)
+    gff_df.to_csv(path.abspath(f"{args.file_out}.csv"), sep="\t", header=True, index=False)
 elif args.type == "excel":
-    gff_df.to_excel(args.file_out, header=True, index=False)
+    gff_df.to_excel(path.abspath(f"{args.file_out}.xlsx"), header=True, index=False)
+elif args.type == "both":
+    gff_df.to_csv(path.abspath(f"{args.file_out}.csv"), sep="\t", header=True, index=False)
+    gff_df.to_excel(path.abspath(f"{args.file_out}.xlsx"), header=True, index=False)
