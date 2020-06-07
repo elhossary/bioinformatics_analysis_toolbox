@@ -43,9 +43,8 @@ gff_df.drop(['index', 'attributes', 'score', 'phase'], axis=1, inplace=True)
 if args.log_columns is not None:
     for log_col in args.log_columns:
         gff_df[f"{log_col}_no_log"] = gff_df[log_col]
-        gff_df[log_col] = np.log10(gff_df[log_col].astype(float))
-        print(gff_df[log_col].to_string())
-
+        gff_df[log_col] = np.log10(gff_df[log_col].astype(float).round(2).replace([np.inf, -np.inf], 0))
+        print(gff_df.to_string())
 scaled_columns = []
 if args.scale_columns is not None:
     for column in args.scale_columns:
