@@ -15,8 +15,10 @@ class WiggleMatrix:
         parsed_wiggles = [Wiggle(wig).parse() for wig in self.wiggle_files]
         base_columns_lst = []
         # Initialize matrix with full length genome
+        all = 0
         for seq_record in parsed_fasta:
-            for i in range(1, len(seq_record.seq) + 1, 1):
+            for i in range(1, len(seq_record.seq) + 2, 1):
+                all += len(seq_record.seq)
                 base_columns_lst.append([seq_record.id, i])
         self.wiggle_matrix_df = pd.DataFrame(data=base_columns_lst, columns=["seqid", "location"])
         for parsed_wiggle in parsed_wiggles:
