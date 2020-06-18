@@ -100,7 +100,6 @@ class PolyTStretchFinder:
                 return None
         return signal
 
-
     def write_to_gff(self, data_df, out_file):
         print("Writing GFF file...")
         str_out = ""
