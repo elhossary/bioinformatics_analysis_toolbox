@@ -13,11 +13,10 @@ class PolyTStretchFinder:
 
     def find_stretches(self, min_len, t_content):
         ret_df = pd.DataFrame(columns=['seqid', 'start', 'end', 'strand', 't_content'])
-        for file in self.refseq_files:
-            fasta_parsed = SeqIO.parse(file, "fasta")
-            for seq_record in fasta_parsed:
-                print(f"Finding poly-T stretches for sequence {seq_record.id}")
-                ret_df = ret_df.append(self.group_positions(str(seq_record.seq), seq_record.id, min_len, t_content))
+        fasta_parsed = SeqIO.parse(self.refseq_files, "fasta")
+        for seq_record in fasta_parsed:
+            print(f"Finding poly-T stretches for sequence {seq_record.id}")
+            ret_df = ret_df.append(self.group_positions(str(seq_record.seq), seq_record.id, min_len, t_content))
         return ret_df
 
     def group_positions(self, sequence_str, seqid, min_len, t_content):
