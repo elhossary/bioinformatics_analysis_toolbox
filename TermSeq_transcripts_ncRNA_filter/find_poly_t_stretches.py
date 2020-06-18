@@ -11,10 +11,10 @@ parser.add_argument("--t_content", required=True, help="", type=float)
 parser.add_argument()
 args = parser.parse_args()
 pathes = []
-
 for item in args.fasta_in:
     for sub_item in glob.glob(item):
         pathes.append(os.path.abspath(sub_item))
 obj = PolyTStretchFinder(pathes)
 df = obj.find_stretches(args.min_len, args.t_content)
+print(df)
 obj.write_to_gff(df, os.path.abspath(args.out_file))
