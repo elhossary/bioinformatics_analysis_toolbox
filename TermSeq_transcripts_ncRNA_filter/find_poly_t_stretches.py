@@ -17,3 +17,4 @@ print(pathes)
 obj = PolyTStretchFinder(pathes)
 df = obj.find_stretches(args.min_len, args.t_content)
 obj.write_to_gff(df, os.path.abspath(args.out_file))
+
