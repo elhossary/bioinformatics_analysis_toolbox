@@ -8,7 +8,6 @@ parser.add_argument("--fasta_in", required=True, help="", type=str)
 parser.add_argument("--out_file", required=True, help="", type=str)
 parser.add_argument("--min_len", required=True, help="", type=int)
 parser.add_argument("--t_content", required=True, help="", type=float)
-parser.add_argument()
 args = parser.parse_args()
 pathes = []
 for item in args.fasta_in:
