@@ -2,7 +2,7 @@ from more_itertools import consecutive_groups
 import pandas as pd
 from numpy import diff, where, split
 from Bio import SeqIO
-import glob
+import os
 import matplotlib.pyplot as plt
 from os import path
 
@@ -13,7 +13,7 @@ class PolyTStretchFinder:
 
     def find_stretches(self, min_len, t_content):
         ret_df = pd.DataFrame(columns=['seqid', 'start', 'end', 'strand', 't_content'])
-        for file in glob.glob(self.refseq_files):
+        for file in self.refseq_files:
             fasta_parsed = SeqIO.parse(file, "fasta")
             for seq_record in fasta_parsed:
                 print(f"Finding poly-T stretches for sequence {seq_record.id}")
@@ -100,8 +100,8 @@ class PolyTStretchFinder:
             if sig_t_count < min_len or sig_t_content < t_content:
                 return None
         return signal
-
-    def write_to_gff(self, data_df):
+    @staticmethod
+    def write_to_gff(out_file, data_df):
         print("Writing GFF file...")
         str_out = ""
         count = 0
@@ -121,7 +121,7 @@ class PolyTStretchFinder:
                 f"name={row['seqid']}_{strand_letter_func(row['strand'])}_poly_T_stretch_{count};" + \
                 f"length={row['length']};t_content={row['t_content']};" + \
                 "\n"
-        outfile = open(f"{path.splitext(path.basename(self.refseq_files))[0]}_poly_t_stretches.gff", "w")
+        outfile = open(f"{os.path.abspath(out_file)}_poly_t_stretches.gff", "w")
         outfile.write(f"###gff-version 3\n{str_out}###")
         outfile.close()
 
