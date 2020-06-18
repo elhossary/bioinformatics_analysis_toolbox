@@ -102,7 +102,7 @@ class PolyTStretchFinder:
         return signal
 
 
-    def write_to_gff(self, out_file, data_df):
+    def write_to_gff(self, data_df, out_file):
         print("Writing GFF file...")
         str_out = ""
         count = 0
@@ -122,7 +122,7 @@ class PolyTStretchFinder:
                 f"name={row['seqid']}_{strand_letter_func(row['strand'])}_poly_T_stretch_{count};" + \
                 f"length={row['length']};t_content={row['t_content']};" + \
                 "\n"
-        outfile = open(f"{os.path.abspath(out_file)}_poly_t_stretches.gff", "w")
+        outfile = open(out_file, "w")
         outfile.write(f"###gff-version 3\n{str_out}###")
         outfile.close()
 
