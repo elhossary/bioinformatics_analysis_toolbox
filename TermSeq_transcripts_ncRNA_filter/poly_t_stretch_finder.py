@@ -100,8 +100,9 @@ class PolyTStretchFinder:
             if sig_t_count < min_len or sig_t_content < t_content:
                 return None
         return signal
-    @staticmethod
-    def write_to_gff(out_file, data_df):
+
+
+    def write_to_gff(self, out_file, data_df):
         print("Writing GFF file...")
         str_out = ""
         count = 0

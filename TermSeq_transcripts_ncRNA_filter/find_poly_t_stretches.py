@@ -16,5 +16,6 @@ pathes = []
 for item in args.fasta_in:
     for sub_item in glob.glob(item):
         pathes.append(os.path.abspath(sub_item))
-obj = PolyTStretchFinder(pathes).find_stretches(args.min_len, args.t_content)
-PolyTStretchFinder.write_to_gff(args.out_prefix, obj)
+obj = PolyTStretchFinder(pathes)
+df = obj.find_stretches(args.min_len, args.t_content)
+obj.write_to_gff(args.out_prefix, df)
