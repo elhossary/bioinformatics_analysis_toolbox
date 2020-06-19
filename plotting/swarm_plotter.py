@@ -12,7 +12,7 @@ parser.add_argument("--data_column", required=True, help="", type=str)
 parser.add_argument("--classes_column", required=True, help="", type=str)
 parser.add_argument("--file_out", required=True, help="", type=str)
 args = parser.parse_args()
-csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#")
+csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#").fillna(0)
 sns.set(rc={'figure.figsize':(16, 9)})
 fig = sns.swarmplot(data=csv_df, x=args.classes_column, y=args.data_column,
                     hue='source', palette='husl').set_title(f"{args.data_column} per class".replace("_", " "))

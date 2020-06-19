@@ -13,7 +13,7 @@ parser.add_argument("--y_column", required=True, help="", type=str)
 parser.add_argument("--classes_column", required=False, help="", type=str)
 parser.add_argument("--file_out", required=True, help="", type=str)
 args = parser.parse_args()
-csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#")
+csv_df = pd.read_csv(os.path.abspath(args.csv_in), sep="\t", comment="#").fillna(0)
 all_sources = list(set(csv_df['source'].values.tolist()))
 sns.set(rc={'figure.figsize':(16, 9)})
 if args.classes_column is None:
