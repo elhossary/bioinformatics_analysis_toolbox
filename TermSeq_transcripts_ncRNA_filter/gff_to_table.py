@@ -50,7 +50,7 @@ if args.scale_columns is not None:
         scaled_columns.append(f"scaled_{column}")
     if args.classes_column is None:
         scaler = preprocessing.MinMaxScaler()
-        scaled_df = pd.DataFrame(scaler.fit_transform(gff_df[args.scale_columns].astype(float).abs()),
+        scaled_df = pd.DataFrame(scaler.fit_transform(gff_df[args.scale_columns].to_numeric().astype(float).abs()),
                                  columns=scaled_columns)
         scaled_df["combined_all_scores"] = scaled_df.sum(axis=1)
         if args.combine_exclude is not None:
