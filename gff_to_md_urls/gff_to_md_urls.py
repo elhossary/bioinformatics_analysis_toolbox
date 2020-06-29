@@ -23,8 +23,9 @@ def main():
         for col in args.extra_column:
             extra_columns += f"|**{col}**"
             extra_columns_sep += f"|:-----:"
-        for item in args.checkin_files:
-            checks_list.append(open(os.path.abspath(item), "r").read())
+        if args.checkin_files is not None:
+            for item in args.checkin_files:
+                checks_list.append(open(os.path.abspath(item), "r").read())
 
     column_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
     header = f"**No.**|**Name**|**Genomic Location**{extra_columns}\n" \
@@ -76,3 +77,4 @@ def check(checks_list, attr):
             checks_str += f"|No"
     return checks_str
 main()
+exit(0)
