@@ -24,13 +24,11 @@ class Wiggle:
                                      float(line.split(" ")[1].replace("\n", ""))])
                 else:
                     current_wiggle_meta = self.parse_wiggle_header(line, current_wiggle_meta)
-                    if len(current_wiggle_meta.keys()) == 2:
-                        print(f"===> Parsing condition: {current_wiggle_meta['track_name']}")
-                    elif len(current_wiggle_meta.keys()) == 4:
-                        print(f"====> For sequence ID: {current_wiggle_meta['variableStep_chrom']}")
-                    else:
-                        exit(1)
+
         self.ret_df = pd.DataFrame(tmp_list, columns=column_names)
+        s = '\n     └── '
+        print(f"===> Parsed condition: {current_wiggle_meta['track_name']}, for sequence IDs:\n"
+              f"     └── {s.join(self.ret_df['variableStep_chrom'].unique())}")
         return self.ret_df
 
     @staticmethod

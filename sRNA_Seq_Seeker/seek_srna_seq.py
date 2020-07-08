@@ -40,7 +40,7 @@ def main():
         print(f"Merged ratio: {round((count_before - count_after) / count_before * 100, 2)}%")
         outfile = open(f"{output_path}/merged_{output_base_name}", "w")
         outfile.write(f"###gff-version 3\n{srna_gff_str}###")
-        outfile.close()
+        outfile.close())
     print("DONE")
 
 
