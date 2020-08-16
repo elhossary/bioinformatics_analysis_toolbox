@@ -97,6 +97,7 @@ def main():
     outfile.write(f"{str_out}")
     outfile.close()
 
+
 def get_longest_continuous_t(sequence_str):
     count = 0
     indices = [i for i, a in enumerate(sequence_str, 1) if a == "T"]
@@ -106,6 +107,7 @@ def get_longest_continuous_t(sequence_str):
         if len(i) > count:
             count = len(i)
     return count
+
 
 def parse_energy_values_file(path_str):
     energy_values_file = open(path.abspath(path_str), "r")

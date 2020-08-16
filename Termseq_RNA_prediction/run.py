@@ -1,4 +1,4 @@
-from Bio import SeqIO
+pifrom Bio import SeqIO
 from numpy import diff, where, split
 import argparse
 import pandas as pd
