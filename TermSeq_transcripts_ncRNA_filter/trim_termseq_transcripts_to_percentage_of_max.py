@@ -86,7 +86,7 @@ def main():
                         anno_id = attr["id"]
                         anno_name = attr["name"]
                         counter = 0
-                        slices_tmp_df = pd.DataFrame(columns=col_names)
+                        slices_tmp_df = pd.DataFrame(columns=col_names + ["cov_mean"])
                         for cons_loc in cons_locs_list:
                             counter += 1
                             gff_df_row_copy["start"] = min(cons_loc)
