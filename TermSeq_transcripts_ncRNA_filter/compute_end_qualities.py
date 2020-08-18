@@ -86,7 +86,7 @@ def main():
                 f"{row['phase']}\t" + \
                 f"{row['attributes']}" + \
                 f";seq_len={int(row['end']) - int(row['start']) + 1}" + \
-                f";T_count_in_last_{args.end_range}_bases_with_{args.offset}_offset={t_count}" + \
+                f";T_count_in_last_{args.end_range}_bases_plus_{args.offset}_offset={t_count}" + \
                 f";longest_continuous_T={longest_t_count}" + \
                 f";energy_value={energy_value}" + \
                 f";ave_step_height={step_height}" + \
