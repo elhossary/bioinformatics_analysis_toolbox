@@ -3,10 +3,7 @@ import pandas as pd
 import os
 from wiggletools.wiggle import Wiggle
 from Bio import SeqIO
-import numpy as np
 import sys
-from scipy import stats
-import multiprocessing as mp
 from more_itertools import consecutive_groups
 
 def main():
