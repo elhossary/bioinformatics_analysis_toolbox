@@ -61,6 +61,7 @@ def main():
                     else:
                         remove_indecies.append(idx)
                     continue
+                    ## ELSE trim_ends_only
                 locs_list = tmp_df["location"].tolist()
                 cons_locs_list = [list(group) for group in consecutive_groups(locs_list)]
                 if len(cons_locs_list) == 1:
@@ -96,7 +97,8 @@ def main():
                             gff_df_row_copy["cov_mean"] = cov_mean
                             slices_tmp_df = slices_tmp_df.append(gff_df_row_copy, ignore_index=True)
                         if args.keep_lower_slices:
-                            slices_gff_df = slices_gff_df.append(slices_tmp_df.drop("cov_mean"), ignore_index=True)
+                            slices_tmp_df.drop("cov_mean", inplace=True)
+                            slices_gff_df = slices_gff_df.append(slices_tmp_df, ignore_index=True)
                         else:
                             slices_tmp_df.sort_values(by="cov_mean", ascending=False, inplace=True)
                             max_row = slices_tmp_df.iloc[0].drop("cov_mean")
