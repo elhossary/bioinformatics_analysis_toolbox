@@ -74,9 +74,9 @@ def filter_best_TSS(grouped_gff_df, f_wig_df, r_wig_df):
         tmp_df["TSS_height"] = None
         for x in tmp_df.index:
             if tmp_df.at[x, "strand"] == "+":
-
+                pass
             elif tmp_df.at[x, "strand"] == "-":
-
+                pass
             else:
                 print("Fatal error in strand")
     return out_df
