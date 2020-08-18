@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--tss_in", required=False, help="", type=str)
     parser.add_argument("--energy_values_in", required=True, help="", type=str)
     parser.add_argument("--end_range", default=10, required=False, help="", type=int)
-    parser.add_argument("--offset", default=5, required=False, help="", type=int)
+    parser.add_argument("--offset", default=0, required=False, help="", type=int)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
     fasta_parsed = SeqIO.parse(path.abspath(args.refseq_in), "fasta")
@@ -86,7 +86,7 @@ def main():
                 f"{row['phase']}\t" + \
                 f"{row['attributes']}" + \
                 f";seq_len={int(row['end']) - int(row['start']) + 1}" + \
-                f";last_{args.end_range}_bases_T_count={t_count}" + \
+                f";T_count_in_last_{args.end_range}_bases_with_{args.offset}_offset={t_count}" + \
                 f";longest_continuous_T={longest_t_count}" + \
                 f";energy_value={energy_value}" + \
                 f";ave_step_height={step_height}" + \

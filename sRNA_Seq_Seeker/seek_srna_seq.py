@@ -6,6 +6,8 @@ import glob
 import os
 import matplotlib.pyplot as plt
 from gff_overlap_merger import GFF_Overlap_Merger as gff_mrg
+import pandas as pd
+
 
 
 def main():
@@ -18,17 +20,19 @@ def main():
     parser.add_argument("--merge_overlaps", action='store_true', help="")
     args = parser.parse_args()
     tss_arr = build_arr_form_gff(glob.glob(args.tss_in)[0])
-    term_arr = build_arr_form_gff(glob.glob(args.term_in)[0])
+    term_arr = build_dataframe_from_gff(glob.glob(args.term_in)[0])
     output_base_name = os.path.basename(args.gff_out)
     output_path = os.path.abspath(os.path.join(args.gff_out, os.pardir))
     print("\n\n--- sRNA Seq Seeker ---\n\n")
     print(f"Seeking for possible sRNA at sequences at length between {args.min_len} and {args.max_len}")
     srna_gff_str, term_matching_tss_counts, tss_matching_term_counts \
         = find_possible_sRNA(args.max_len, tss_arr, term_arr, args.min_len)
+    """
     plot_hist(term_matching_tss_counts, "How many TSSs are linked to each terminator",
               f"{output_path}/plot_TSS_to_Term_{output_base_name}.png")
     plot_hist(tss_matching_term_counts, "How many terminators are linked to each TSS",
               f"{output_path}/plot_Term_to_TSS_{output_base_name}.png")
+    """
     print("\nWriting output to file")
     outfile = open(args.gff_out, "w")
     outfile.write(f"###gff-version 3\n{srna_gff_str}###")
@@ -40,7 +44,7 @@ def main():
         print(f"Merged ratio: {round((count_before - count_after) / count_before * 100, 2)}%")
         outfile = open(f"{output_path}/merged_{output_base_name}", "w")
         outfile.write(f"###gff-version 3\n{srna_gff_str}###")
-        outfile.close())
+        outfile.close()
     print("DONE")
 
 
@@ -64,53 +68,61 @@ def find_possible_sRNA(srna_max_length, tss_arr, term_arr, srna_min_length):
     for tss_index, tss_row in enumerate(tss_arr):
         tss_matching_term_counts.append(0)
         sys.stdout.flush()
-        sys.stdout.write("\r" + f"Progress: {round(tss_index / tss_arr_len * 100, 2)}% | " +
+        sys.stdout.write("\r" + f"Progress: {round(tss_index / tss_arr_len * 100, 1)}% | " +
                          f"{srna_count} possible sRNAs found      ...")
-        for term_index, term_row in enumerate(term_arr):
-            if tss_row[0] == term_row[0]:
-                if tss_row[6] == term_row[6] == "+":
-
-                    if tss_row[4] < term_row[3] and \
-                            (term_row[4] - tss_row[3]) <= srna_max_length and \
-                            srna_min_length <= (term_row[3] - tss_row[3]):
-                        srna_count += 1
-                        tss_matching_term_counts[-1] += 1
-                        r_srna_gff_str += \
-                            f"{tss_row[0]}\t" + \
-                            f"sRNA_Seq_Seeker\t" + \
-                            f"possible_sRNA_seq\t" + \
-                            f"{tss_row[3]}\t" + \
-                            f"{term_row[4]}\t" + \
-                            f".\t" + \
-                            f"{term_row[6]}\t" + \
-                            f".\t" + \
-                            f"id=possible_srna{srna_count};" + \
-                            f"name=possible_srna{srna_count};" + \
-                            f"seq_len={term_row[4] - tss_row[3]};" + \
-                            f"matched_tss={parse_attributes(tss_row[8])['id']};" + \
-                            f"matched_terminator={parse_attributes(term_row[8])['id']}\n"
-
-                if tss_row[6] == term_row[6] == "-":
-
-                    if term_row[4] < tss_row[3] and \
-                            (tss_row[4] - term_row[3]) <= srna_max_length and \
-                            srna_min_length <= (tss_row[3] - term_row[3]):
-                        tss_matching_term_counts[-1] += 1
-                        srna_count += 1
-                        r_srna_gff_str += \
-                            f"{tss_row[0]}\t" + \
-                            f"sRNA_Seq_Seeker\t" + \
-                            f"possible_sRNA_seq\t" + \
-                            f"{term_row[3]}\t" + \
-                            f"{tss_row[4]}\t" + \
-                            f".\t" + \
-                            f"{term_row[6]}\t" + \
-                            f".\t" + \
-                            f"id=possible_srna{srna_count};" + \
-                            f"name=possible_srna{srna_count};" + \
-                            f"seq_len={tss_row[4] - term_row[3]};" + \
-                            f"matched_tss={parse_attributes(tss_row[8])['id']};" + \
-                            f"matched_terminator={parse_attributes(term_row[8])['id']}\n"
+        if tss_row[2] == 'TSS':
+            srna_type = "TSS_sRNA"
+        elif tss_row[2] == 'processing_site':
+            srna_type = "PS_sRNA"
+        elif tss_row[2] == 'cleavage_site':
+            srna_type = "cleavage_sRNA"
+        else:
+            srna_type = "sRNA"
+        if tss_row[6] == "+":
+            tmp_df = term_arr[(term_arr["seqid"] == tss_row[0]) & (term_arr["strand"] == "+") &
+                              (tss_row[4] < term_arr["start"]) &
+                              ((term_arr["end"] - tss_row[3]) <= srna_max_length) &
+                              (srna_min_length <= (term_arr["start"] - tss_row[3]))]
+            for idx in tmp_df.index:
+                srna_count += 1
+                tss_matching_term_counts[-1] += 1
+                r_srna_gff_str += \
+                    f"{tss_row[0]}\t" + \
+                    f"sRNA_Seq_Seeker\t" + \
+                    f"ncRNA\t" + \
+                    f"{tss_row[3]}\t" + \
+                    f"{tmp_df.at[idx, 'end']}\t" + \
+                    f".\t" + \
+                    f"{tmp_df.at[idx, 'strand']}\t" + \
+                    f".\t" + \
+                    f"id=possible_{srna_type}_{srna_count};" + \
+                    f"name=possible_{srna_type}_{srna_count};" + \
+                    f"seq_len={tmp_df.at[idx, 'end'] - tss_row[3]};" + \
+                    f"matched_5_prime_end={parse_attributes(tss_row[8])['id']};" + \
+                    f"matched_terminator={parse_attributes(tmp_df.at[idx, 'attributes'])['id']}\n"
+        elif tss_row[6] == "-":
+            tmp_df = term_arr[(term_arr["seqid"] == tss_row[0]) & (term_arr["strand"] == "-") &
+                              (term_arr["end"] < tss_row[3]) &
+                              ((tss_row[4] - term_arr["start"]) <= srna_max_length) &
+                              (srna_min_length <= (tss_row[3] - term_arr['start']))]
+            for idx in tmp_df.index:
+                tss_matching_term_counts[-1] += 1
+                srna_count += 1
+                r_srna_gff_str += \
+                    f"{tss_row[0]}\t" + \
+                    f"sRNA_Seq_Seeker\t" + \
+                    f"ncRNA\t" + \
+                    f"{tmp_df.at[idx, 'start']}\t" + \
+                    f"{tss_row[4]}\t" + \
+                    f".\t" + \
+                    f"{tmp_df.at[idx, 'strand']}\t" + \
+                    f".\t" + \
+                    f"id=possible_{srna_type}_{srna_count};" + \
+                    f"name=possible_{srna_type}_{srna_count};" + \
+                    f"seq_len={tss_row[4] - tmp_df.at[idx, 'start']};" + \
+                    f"matched_5_prime_end={parse_attributes(tss_row[8])['id']};" + \
+                    f"matched_terminator={parse_attributes(tmp_df.at[idx, 'attributes'])['id']}\n"
+    """
     for term_index, term_row in enumerate(term_arr):
         term_matching_tss_counts.append(0)
         for tss_index, tss_row in enumerate(tss_arr):
@@ -125,6 +137,7 @@ def find_possible_sRNA(srna_max_length, tss_arr, term_arr, srna_min_length):
                             (tss_row[4] - term_row[3]) <= srna_max_length and \
                             srna_min_length <= (tss_row[3] - term_row[3]):
                         term_matching_tss_counts[-1] += 1
+    """
     sys.stdout.write("\r" + f"Progress 100% with total {srna_count} possible sRNAs could be found")
     print("\n")
     return r_srna_gff_str, term_matching_tss_counts, tss_matching_term_counts
@@ -156,5 +169,9 @@ def parse_attributes(attr_str):
 def build_arr_form_gff(path):
     data_arr = genfromtxt(path, delimiter="\t", comments="#", dtype=None, encoding=None)
     return data_arr
+def build_dataframe_from_gff(path):
+    col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
+    data_df = pd.read_csv(path, delimiter="\t", comment="#", names=col_names)
+    return data_df
 
 main()
