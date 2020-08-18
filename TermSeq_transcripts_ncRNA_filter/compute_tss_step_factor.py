@@ -31,14 +31,13 @@ col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phas
 gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
 f_gff_df = gff_df.loc[gff_df["strand"] == "+"].reset_index()
 r_gff_df = gff_df.loc[gff_df["strand"] == "-"].reset_index()
-wiggle_pathes = []
-
+parsed_wiggles = []
+chrom_sizes = get_chrom_sizes([os.path.abspath(args.fasta_in)])
 for item in args.wiggle_files:
     for sub_item in glob.glob(item):
-        wiggle_pathes.append(os.path.abspath(sub_item))
-chrom_sizes = get_chrom_sizes([os.path.abspath(args.fasta_in)])
-parsed_wiggles = [Wiggle(wiggle_path, chrom_sizes).get_wiggle() for wiggle_path in wiggle_pathes]
-f_wiggles_matrix, r_wiggles_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=1).get_matrix_by_orientation()
+        parsed_wiggles.append(Wiggle(sub_item, chrom_sizes).get_wiggle())
+wig_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=1)
+f_wiggles_matrix, r_wiggles_matrix = wig_matrix.get_matrix_by_orientation()
 f_wiggles_cond = [col for col in f_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 r_wiggles_cond = [col for col in r_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 # minimize the pandas dataframe size for faster processing
