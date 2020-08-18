@@ -22,8 +22,8 @@ def main():
     out_df.to_csv(os.path.abspath(f"{args.tss_ps_out}"), sep="\t", header=False, index=False)
     if args.split:
         out_df[out_df["type"] == "TSS"]\
-            .to_csv(os.path.abspath(f"{args.tss_ps_out.replace('_PS', '')}"), sep="\t", header=False, index=False)
+            .to_csv(os.path.abspath(f"{args.tss_ps_out}").replace('_PS', ''), sep="\t", header=False, index=False)
         out_df[out_df["type"] == "processing_site"] \
-            .to_csv(os.path.abspath(f"{args.tss_ps_out.replace('_TSS', '')}"), sep="\t", header=False, index=False)
+            .to_csv(os.path.abspath(f"{args.tss_ps_out}").replace('_TSS', ''), sep="\t", header=False, index=False)
 
 main()
