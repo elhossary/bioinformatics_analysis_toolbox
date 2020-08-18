@@ -4,6 +4,7 @@ import numpy as np
 import os
 import glob
 import sys
+from Bio import SeqIO
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
 
