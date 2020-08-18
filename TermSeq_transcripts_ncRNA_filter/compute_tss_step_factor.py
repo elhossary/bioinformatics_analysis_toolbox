@@ -4,7 +4,20 @@ import numpy as np
 import os
 import glob
 import sys
-from wiggle_matrix import WiggleMatrix
+from wiggletools.wiggle import Wiggle
+from wiggletools.wiggle_matrix import WiggleMatrix
+
+
+
+def get_chrom_sizes(fasta_pathes):
+    ret_list = []
+    for fasta_path in fasta_pathes:
+        print(f"==> Parsing reference sequence: {os.path.basename(fasta_path)}")
+        for seq_record in SeqIO.parse(fasta_path, "fasta"):
+            ret_list.append({"seqid": seq_record.id,
+                             "size": len(seq_record.seq),
+                             "fasta": os.path.basename(fasta_path)})
+    return ret_list
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
@@ -22,7 +35,9 @@ wiggle_pathes = []
 for item in args.wiggle_files:
     for sub_item in glob.glob(item):
         wiggle_pathes.append(os.path.abspath(sub_item))
-f_wiggles_matrix, r_wiggles_matrix = WiggleMatrix(args.fasta_in, wiggle_pathes).get_matrix_by_orientation()
+chrom_sizes = get_chrom_sizes(os.path.abspath(args.fasta_in))
+parsed_wiggles = [Wiggle(wiggle_path, chrom_sizes).get_wiggle() for wiggle_path in wiggle_pathes]
+f_wiggles_matrix, r_wiggles_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=1).get_matrix_by_orientation()
 f_wiggles_cond = [col for col in f_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 r_wiggles_cond = [col for col in r_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 # minimize the pandas dataframe size for faster processing
