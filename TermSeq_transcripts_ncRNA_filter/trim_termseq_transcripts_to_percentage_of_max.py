@@ -86,7 +86,7 @@ def main():
                         anno_id = attr["id"]
                         anno_name = attr["name"]
                         counter = 0
-                        slices_tmp_df = pd.DataFrame(columns=col_names + ["cov_mean"])
+                        slices_tmp_df = pd.DataFrame(columns=col_names)
                         for cons_loc in cons_locs_list:
                             counter += 1
                             gff_df_row_copy["start"] = min(cons_loc)
@@ -102,7 +102,8 @@ def main():
                             slices_tmp_df.sort_values(by="cov_mean", ascending=False, inplace=True)
                             max_row = slices_tmp_df.iloc[0].drop("cov_mean")
                             slices_gff_df = slices_gff_df.append(max_row, ignore_index=True)
-    slices_gff_df.drop("cov_mean", inplace=True)
+    if "cov_mean" in slices_gff_df.columns:
+        slices_gff_df.drop("cov_mean", inplace=True)
     print(f"\nTotal annotations removed: {len(remove_indecies)}\n\t"
           f"- Invalid: {invalid}\n\t- Too short/long: {len(remove_indecies) - invalid}")
     gff_df.drop(remove_indecies, axis=0, inplace=True)
