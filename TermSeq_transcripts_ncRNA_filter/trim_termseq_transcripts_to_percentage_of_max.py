@@ -97,13 +97,12 @@ def main():
                             gff_df_row_copy["cov_mean"] = cov_mean
                             slices_tmp_df = slices_tmp_df.append(gff_df_row_copy, ignore_index=True)
                         if args.keep_lower_slices:
-                            slices_gff_df = slices_gff_df.append(slices_tmp_df, ignore_index=True)
+                            slices_gff_df = \
+                                slices_gff_df.append(slices_tmp_df.drop("cov_mean", axis=1), ignore_index=True)
                         else:
                             slices_tmp_df.sort_values(by="cov_mean", ascending=False, inplace=True)
                             max_row = slices_tmp_df.iloc[0].drop("cov_mean")
                             slices_gff_df = slices_gff_df.append(max_row, ignore_index=True)
-    if "cov_mean" in slices_gff_df.columns:
-        slices_gff_df.drop("cov_mean", inplace=True)
     print(f"\nTotal annotations removed: {len(remove_indecies)}\n\t"
           f"- Invalid: {invalid}\n\t- Too short/long: {len(remove_indecies) - invalid}")
     gff_df.drop(remove_indecies, axis=0, inplace=True)
