@@ -30,7 +30,7 @@ def main():
     seqid_list = [x["seqid"] for x in chrom_sizes]
     invalid = 0
     slices_gff_df = pd.DataFrame(columns=col_names)
-    all_seqid_slices_gff_df = pd.DataFrame(columns=col_names)
+
     for seqid in seqid_list:
         f_wig_df_slice = f_wig_df[f_wig_df["variableStep_chrom"] == seqid]
         r_wig_df_slice = r_wig_df[r_wig_df["variableStep_chrom"] == seqid]
