@@ -30,6 +30,7 @@ def main():
     seqid_list = [x["seqid"] for x in chrom_sizes]
     invalid = 0
     slices_gff_df = pd.DataFrame(columns=col_names)
+    all_seqid_slices_gff_df = pd.DataFrame(columns=col_names)
     for seqid in seqid_list:
         f_wig_df_slice = f_wig_df[f_wig_df["variableStep_chrom"] == seqid]
         r_wig_df_slice = r_wig_df[r_wig_df["variableStep_chrom"] == seqid]
@@ -103,10 +104,11 @@ def main():
                             slices_tmp_df.sort_values(by="cov_mean", ascending=False, inplace=True)
                             max_row = slices_tmp_df.iloc[0].drop("cov_mean")
                             slices_gff_df = slices_gff_df.append(max_row, ignore_index=True)
+        all_seqid_slices_gff_df = all_seqid_slices_gff_df.append(slices_gff_df, ignore_index=True)
     print(f"\nTotal annotations removed: {len(remove_indecies)}\n\t"
           f"- Invalid: {invalid}\n\t- Too short/long: {len(remove_indecies) - invalid}")
     gff_df.drop(remove_indecies, axis=0, inplace=True)
-    gff_df = gff_df.append(slices_gff_df, ignore_index=True)
+    gff_df = gff_df.append(all_seqid_slices_gff_df, ignore_index=True)
     gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
 
