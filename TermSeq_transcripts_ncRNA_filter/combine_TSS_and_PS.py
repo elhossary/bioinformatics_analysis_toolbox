@@ -22,9 +22,12 @@ def main():
     tss_ps_name = str(os.path.abspath(f"{args.tss_ps_out}"))
     out_df.to_csv(tss_ps_name, sep="\t", header=False, index=False)
     if args.split:
+        print(tss_ps_name.replace('_PS', ''))
+        tss_name = tss_ps_name.replace('_PS', '')
+        ps_name = tss_ps_name.replace('_TSS', '')
         tss_out_df = out_df[out_df["type"] == "TSS"]
         ps_out_df = out_df[out_df["type"] == "processing_site"]
-        tss_out_df.to_csv(tss_ps_name.replace('_PS', ''), sep="\t", header=False, index=False)
-        ps_out_df.to_csv(tss_ps_name.replace('_TSS', ''), sep="\t", header=False, index=False)
+        tss_out_df.to_csv(tss_name, sep="\t", header=False, index=False)
+        ps_out_df.to_csv(ps_name, sep="\t", header=False, index=False)
 
 main()
