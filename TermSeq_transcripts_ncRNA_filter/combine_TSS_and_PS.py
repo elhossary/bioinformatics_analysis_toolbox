@@ -19,10 +19,12 @@ def main():
     out_df.sort_values(["seqid", "start", "end", "strand", "type"], inplace=True)
     out_df.reset_index(inplace=True, drop=True)
     out_df.drop_duplicates(subset=["seqid", "start", "end", "strand"], keep="first", inplace=True)
+    tss_ps_name = str(os.path.abspath(f"{args.tss_ps_out}"))
+    out_df.to_csv(tss_ps_name, sep="\t", header=False, index=False)
     if args.split:
         tss_out_df = out_df[out_df["type"] == "TSS"]
         ps_out_df = out_df[out_df["type"] == "processing_site"]
-        tss_out_df.to_csv(os.path.abspath(f"{args.tss_ps_out}").replace('_PS', ''), sep="\t", header=False, index=False)
-        ps_out_df.to_csv(os.path.abspath(f"{args.tss_ps_out}").replace('_TSS', ''), sep="\t", header=False, index=False)
-    out_df.to_csv(os.path.abspath(f"{args.tss_ps_out}"), sep="\t", header=False, index=False)
+        tss_out_df.to_csv(tss_ps_name.replace('_PS', ''), sep="\t", header=False, index=False)
+        ps_out_df.to_csv(tss_ps_name.replace('_TSS', ''), sep="\t", header=False, index=False)
+
 main()
