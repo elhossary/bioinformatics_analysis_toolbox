@@ -24,9 +24,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--fasta_in", required=True, help="", type=str)
 parser.add_argument("--step_range", default=3, help="", type=int)
+parser.add_argument("--processes", default=1, help="", type=int)
 parser.add_argument("--gff_out", required=True, help="", type=str)
 parser.add_argument("--wiggle_files", required=True, help="", type=str, nargs="+")
-parser.add_argument("--processes", default=1, help="", type=int)
+
 args = parser.parse_args()
 col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
 gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
