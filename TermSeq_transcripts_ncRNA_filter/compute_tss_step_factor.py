@@ -26,6 +26,7 @@ parser.add_argument("--fasta_in", required=True, help="", type=str)
 parser.add_argument("--step_range", default=3, help="", type=int)
 parser.add_argument("--gff_out", required=True, help="", type=str)
 parser.add_argument("--wiggle_files", required=True, help="", type=str, nargs="+")
+parser.add_argument("--processes", default=1, help="", type=int)
 args = parser.parse_args()
 col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
 gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
@@ -36,7 +37,7 @@ chrom_sizes = get_chrom_sizes([os.path.abspath(args.fasta_in)])
 for item in args.wiggle_files:
     for sub_item in glob.glob(item):
         parsed_wiggles.append(Wiggle(sub_item, chrom_sizes).get_wiggle())
-wig_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=1)
+wig_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=args.processes)
 f_wiggles_matrix, r_wiggles_matrix = wig_matrix.get_matrix_by_orientation()
 f_wiggles_cond = [col for col in f_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
 r_wiggles_cond = [col for col in r_wiggles_matrix.columns.tolist() if "seqid" != col != "location"]
