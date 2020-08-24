@@ -48,8 +48,8 @@ def main():
             else:
                 print("Fatal error")
                 exit(1)
-            remove_limit = tmp_df["score"].max() * ((100 - args.nth) / 100)
-            tmp_df = tmp_df[tmp_df["score"] > remove_limit]
+            remove_limit = tmp_df["score"].max() * (args.nth / 100)
+            tmp_df = tmp_df[tmp_df["score"] >= remove_limit]
             if tmp_df.empty:
                 remove_indecies.append(idx)
                 invalid += 1
