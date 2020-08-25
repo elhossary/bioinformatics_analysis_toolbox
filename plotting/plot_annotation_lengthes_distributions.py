@@ -12,12 +12,11 @@ gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", co
 
 gff_df["anno_len"] = gff_df["end"] - gff_df["start"] + 1
 bins = len(gff_df["anno_len"].unique().tolist())
+disc = gff_df["anno_len"].describe()
 values = gff_df["anno_len"].tolist()
-v_mean = gff_df["anno_len"].mean()
-v_max = gff_df["anno_len"].max()
 fig = plt.figure(figsize=(16, 9))
 plt.hist(values, bins=bins)
-plt.title(f"Annotations lengths distribution, average seq len: {round(v_mean, 2)}, max: {v_max}")
+plt.title(f"Annotations lengths distribution,\ncount: {disc['count']}, mean: {round(disc['mean'], 2)}, max: {disc['max']}, median: {disc['50%']}")
 plt.xlabel(f"Annotation length")
 plt.ylabel("Frequency")
 plt.grid(True)
