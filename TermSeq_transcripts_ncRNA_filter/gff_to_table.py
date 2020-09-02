@@ -39,7 +39,7 @@ for index, row in gff_df.iterrows():
 attr_df = pd.DataFrame(gff_df.attributes.values.tolist())
 attr_df.set_index("df_index", inplace=True)
 gff_df = pd.merge(left=gff_df, right=attr_df, left_index=True, right_index=True).fillna("")
-gff_df.drop(['index', 'attributes', 'score', 'phase'], axis=1, inplace=True)
+gff_df.drop(['attributes', 'score', 'phase'], axis=1, inplace=True)
 if args.log_columns is not None:
     for log_col in args.log_columns:
         gff_df[f"{log_col}_no_log"] = gff_df[log_col]
@@ -74,7 +74,18 @@ if args.scale_columns is not None:
         gff_df = pd.merge(left=gff_df, right=scaled_df, left_index=True, right_index=True).fillna("")
 
 gff_df = gff_df.round(2)
-
+"""
+url = "https://labs.zbmed.de/jbrowse/?data=jb_datasources_pool%2Fl_pneumophila_philadelphia-1"
+tracks = "DNA%2COD_0_2_Term-Seq_forward%2CLegionella_pneumophila_LP02.gff%2COD_0_2_Term-Seq_reverse"
+gff_df["link"] = None
+for idx in gff_df.index:
+    gff_df.at[idx, "link"] = f"{url}&loc={gff_df.at[idx, 'seqid']}%3A" \
+                             f"{str(int(gff_df.at[idx, 'start']) - 30) if int(gff_df.at[idx, 'start']) - 30 > 0 else 0}" \
+                             f"..{str(int(gff_df.at[idx, 'end']) + 30)}" \
+                             f"&highlight={gff_df.at[idx, 'seqid']}%3A{gff_df.at[idx, 'start']}..{gff_df.at[idx, 'end']}" \
+                             f"&tracks={tracks}"
+gff_df.drop(['index'], axis=1, inplace=True)
+"""
 if args.type == "csv":
     gff_df.to_csv(path.abspath(f"{args.file_out}.csv"), sep="\t", header=True, index=False)
 elif args.type == "excel":

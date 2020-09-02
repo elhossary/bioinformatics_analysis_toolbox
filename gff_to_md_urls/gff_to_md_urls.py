@@ -13,10 +13,13 @@ def main():
     parser.add_argument("--tracks", required=False, help="", type=str, default="")
     parser.add_argument("--extra_column", required=False, help="", type=str, nargs='+')
     parser.add_argument("--checkin_files", required=False, help="", type=str, nargs='+')
+    parser.add_argument("--data_columns", required=False, help="", type=str, nargs='+')
     args = parser.parse_args()
     gff_files = glob.glob(args.gff_in)
     extra_columns = ""
     extra_columns_sep = ""
+    data_columns = ""
+    data_columns_sep = ""
     checks_list = []
 
     if args.extra_column is not None:
@@ -26,17 +29,30 @@ def main():
         if args.checkin_files is not None:
             for item in args.checkin_files:
                 checks_list.append(open(os.path.abspath(item), "r").read())
-
+    if args.data_columns is not None:
+        for col in args.data_columns:
+            data_columns += f"|**{col}**"
+            data_columns_sep += f"|:-----:"
     column_names = ["accession", "source", "type", "start", "end", "dot1", "strand", "dot2", "attributes"]
-    header = f"**No.**|**Name**|**Genomic Location**{extra_columns}\n" \
-             f":-----:|:-----:|:-----:{extra_columns_sep}\n"
+    header = f"**No.**|**Name**|**Genomic Location**{extra_columns}{data_columns}\n" \
+             f":-----:|:-----:|:-----:{extra_columns_sep}{data_columns_sep}\n"
     output_str = ""
     counter = 0
     for file in gff_files:
         gff_df = pd.read_csv(os.path.abspath(file), names=column_names, sep="\t", comment="#")
+        #gff_df.reset_index(inplace=True)
+        for index in gff_df.index:
+            gff_df.at[index, 'attributes'] = parse_attributes(gff_df.at[index, 'attributes'])
+            gff_df.at[index, 'attributes']['df_index'] = index
+        attr_df = pd.DataFrame(gff_df.attributes.values.tolist())
+        attr_df.set_index("df_index", inplace=True)
+        gff_df = pd.merge(left=gff_df, right=attr_df, left_index=True, right_index=True).fillna("")
         for index, row in gff_df.iterrows():
             counter += 1
-            output_str += f"{counter}|[{get_label_name(parse_attributes(row['attributes']))}]" \
+            x = ""
+            for dc in args.data_columns:
+                x += f'|{row[dc]}'
+            output_str += f"{counter}|[{(row['id'])}]" \
                           f"({args.url}&loc={row['accession']}%3A" \
                           f"{str(int(row['start']) - 30) if int(row['start']) - 30 > 0 else 0}" \
                           f"..{str(int(row['end']) + 30)}" \
@@ -44,6 +60,7 @@ def main():
                           f"&tracks={args.tracks})|" \
                           f"{row['accession']} .. {row['start']} .. {row['end']} .. {row['strand']}" \
                           f"{check(checks_list, row['attributes'])}" \
+                          f"{x}" \
                           f"\n"
         # {extra_columns_sep.replace(':-----:', '')}
         counter = 0
