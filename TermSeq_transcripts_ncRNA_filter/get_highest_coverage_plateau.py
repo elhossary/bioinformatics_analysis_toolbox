@@ -54,10 +54,10 @@ def main():
             mean_coverage = round(tmp_df[tmp_df["location"].between(
                 middle_max_loc - plateau_half_size, middle_max_loc + plateau_half_size)]["score"].mean(), 2)
             gff_df.at[idx, "attributes"] += f";seq_len={anno_len};average_highest_plateau_coverage={mean_coverage}"\
-                                            f";log10_AHPC={round(np.log10(mean_coverage), 2)}"
+                                            f";log10_AHPC={round(np.log10(mean_coverage), 2) if mean_coverage > 0 else 0.0}"
             plateaus_coverages.append(mean_coverage)
     gff_df.drop(remove_list, inplace=True)
-    log_plateaus_coverages = [round(x, 2) for x in np.log10(plateaus_coverages)]
+    log_plateaus_coverages = [round(x, 2) for x in np.log10(plateaus_coverages) if x > 0]
     unique_log_plateaus_coverages = []
     for i in log_plateaus_coverages:
         if i not in unique_log_plateaus_coverages:
