@@ -4,12 +4,14 @@ import os
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--term_gff_in", required=True, help="", type=str)
-parser.add_argument("--drna_gff_in", required=True, help="", type=str)
+parser.add_argument("--gff_files_in", required=True, help="", type=str)
 args = parser.parse_args()
 col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
-
-for path in [os.path.abspath(args.term_gff_in), os.path.abspath(args.drna_gff_in)]:
+pathes = []
+for item in args.gff_files_in:
+    for sub_item in glob.glob(item):
+        pathes.append(os.path.abspath(sub_item))
+for path in pathes:
     gff_df = pd.read_csv(path, names=col_names, sep="\t", comment="#")
     gff_df["anno_len"] = gff_df["end"] - gff_df["start"] + 1
     bins = len(gff_df["anno_len"].unique().tolist())
