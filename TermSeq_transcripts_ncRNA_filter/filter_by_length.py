@@ -8,7 +8,8 @@ parser.add_argument("--max_len", default=300, required=False, help="", type=int)
 args = parser.parse_args()
 
 col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
-gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
+abs_path = path.abspath(args.gff_in)
+gff_df = pd.read_csv(abs_path, names=col_names, sep="\t", comment="#")
 str_out = ""
 print("Writing GFF file...")
 for index, row in gff_df.iterrows():
@@ -24,6 +25,6 @@ for index, row in gff_df.iterrows():
             f"{row['phase']}\t" + \
             f"{row['attributes']}" + \
             "\n"
-outfile = open(f"length_filtered_{path.basename(args.gff_in)}", "w")
+outfile = open(f"{path.dirname(abs_path)}/length_filtered_{path.basename(args.gff_in)}", "w")
 outfile.write(f"###gff-version 3\n{str_out}###")
 outfile.close()
