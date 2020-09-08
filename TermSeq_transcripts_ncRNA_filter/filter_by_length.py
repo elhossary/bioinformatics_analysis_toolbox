@@ -25,6 +25,6 @@ for index, row in gff_df.iterrows():
             f"{row['phase']}\t" + \
             f"{row['attributes']}" + \
             "\n"
-outfile = open(f"{path.dirname(abs_path)}/length_filtered_{path.basename(args.gff_in)}", "w")
+outfile = open(f"{path.dirname(abs_path)}/length_filtered_{path.basename(abs_path)}", "w")
 outfile.write(f"###gff-version 3\n{str_out}###")
 outfile.close()
