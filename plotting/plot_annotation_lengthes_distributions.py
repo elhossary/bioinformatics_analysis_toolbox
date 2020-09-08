@@ -2,9 +2,10 @@ import argparse
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import glob
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gff_files_in", required=True, help="", type=str)
+parser.add_argument("--gff_files_in", required=True, help="", type=str, nargs="+")
 args = parser.parse_args()
 col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
 pathes = []
@@ -21,7 +22,7 @@ for path in pathes:
     plt.hist(values, bins=bins)
     plt.title(f"Annotations lengths distribution,\ncount: {disc['count']}, mean: {round(disc['mean'], 2)}, max: {disc['max']}, median: {disc['50%']}")
     plt.xlabel(f"Annotation length")
-    plt.xticks(range(0, 301, 25))
+    plt.xticks(range(0, gff_df["anno_len"].max() + 25, 25))
     plt.ylabel("Frequency")
     plt.grid(True)
     fig.savefig(os.path.abspath(f"{path}.png"))
