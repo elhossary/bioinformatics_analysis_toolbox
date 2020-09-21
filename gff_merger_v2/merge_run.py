@@ -36,7 +36,7 @@ def main():
             output_path = os.path.abspath(os.path.join(file, os.pardir))
             output_file = f"{output_path}/{output_base_name}"
 
-            gff_merged, count_before, count_after = gff_mrg(open(os.path.abspath(file), "r").read(),
+            gff_merged, count_before, count_after, merge_stats = gff_mrg(open(os.path.abspath(file), "r").read(),
                                                             args.annotation_type, args.merge_range,
                                                             args.annotate).merge_overlaps()
             print(f"Total annotations count before merge:\t{count_before}")
@@ -50,6 +50,7 @@ def main():
             else:
                 overlap_ratio = round((count_before - count_after) / count_before * 100, 2)
             print(f"Overlap ratio: {overlap_ratio}%")
+            print(f"{merge_stats}")
             print(f"Writing output to file: {output_file}")
             outfile = open(output_file, "w")
             outfile.write(f"###gff-version 3\n{gff_merged}###")
@@ -62,7 +63,7 @@ def main():
             files_appended += open(os.path.abspath(file), "r").read()
             if not files_appended.endswith('\n'):
                 files_appended += "\n"
-        files_merged, count_before, count_after = \
+        files_merged, count_before, count_after, merge_stats = \
             gff_mrg(files_appended, args.annotation_type, args.merge_range, args.annotate).merge_overlaps()
         files_merged.count('\n')
         print(f"Total {args.annotation_type} count before merge:\t{count_before}")
@@ -77,6 +78,7 @@ def main():
             overlap_ratio = round((count_before - count_after) / count_before * 100, 2)
 
         print(f"Decrease ratio: {overlap_ratio}%")
+        print(f"{merge_stats}")
         print(f"Writing output to file: {output_file}")
         outfile = open(output_file, "w")
         outfile.write(f"###gff-version 3\n{files_merged}###")
