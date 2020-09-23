@@ -50,8 +50,9 @@ def main():
         for index, row in gff_df.iterrows():
             counter += 1
             x = ""
-            for dc in args.data_columns:
-                x += f'|{row[dc]}'
+            if args.data_columns is not None:
+                for dc in args.data_columns:
+                    x += f'|{row[dc]}'
             output_str += f"{counter}|[{(row['id'])}]" \
                           f"({args.url}&loc={row['accession']}%3A" \
                           f"{str(int(row['start']) - 30) if int(row['start']) - 30 > 0 else 0}" \
