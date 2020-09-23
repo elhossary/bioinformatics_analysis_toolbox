@@ -83,8 +83,10 @@ def get_label_name(dict_in):
     else:
         return 'Click here'
 
+
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
+
 
 def check(checks_list, attr):
     checks_str = ""
