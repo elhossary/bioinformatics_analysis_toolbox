@@ -52,7 +52,8 @@ def main():
             print(f"Overlap ratio: {overlap_ratio}%")
             print(f"Writing output to file: {output_file}")
             outfile = open(output_file, "w")
-            outfile.write(f"###gff-version 3\n{gff_merged}###")
+            # outfile.write(f"###gff-version 3\n{files_merged}###")
+            outfile.write(f"{gff_merged}")
             outfile.close()
         print("Done!\n")
     else:
@@ -79,7 +80,8 @@ def main():
         print(f"Decrease ratio: {overlap_ratio}%")
         print(f"Writing output to file: {output_file}")
         outfile = open(output_file, "w")
-        outfile.write(f"###gff-version 3\n{files_merged}###")
+        #outfile.write(f"###gff-version 3\n{files_merged}###")
+        outfile.write(f"{files_merged}")
         outfile.close()
         print("Done!\n")
 
