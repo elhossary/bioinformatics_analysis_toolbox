@@ -30,7 +30,7 @@ else:
     print("Fatal error")
     exit(0)
 gff_df = f_gff_df.append(r_gff_df)
-gff_df[gff_df["start"] < 0]["start"] = 0
+gff_df[gff_df["start"] < 0].loc[:, ["start"]] = 0
 for seq_record in SeqIO.parse(path.abspath(args.fasta_in), "fasta"):
     genome_size = len(str(seq_record.seq))
     gff_df[(gff_df["seqid"] == seq_record.id) & (gff_df["end"] > genome_size)]["end"] = genome_size
