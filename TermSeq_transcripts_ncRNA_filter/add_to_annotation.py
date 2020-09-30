@@ -2,6 +2,7 @@ import pandas as pd
 from os import path
 import argparse
 from Bio import SeqIO
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--gff_in", required=True, help="", type=str)
 parser.add_argument("--fasta_in", required=True, help="", type=str)
