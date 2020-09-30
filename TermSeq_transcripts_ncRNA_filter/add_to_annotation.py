@@ -31,11 +31,14 @@ else:
     print("Fatal error")
     exit(0)
 gff_df = f_gff_df.append(r_gff_df)
-gff_df[gff_df["start"] < 1].loc[:, ["start"]] = 1
+out_gff_df = pd.DataFrame(columns=col_names)
 for seq_record in SeqIO.parse(path.abspath(args.fasta_in), "fasta"):
     genome_size = len(str(seq_record.seq))
-    gff_df[(gff_df["seqid"] == seq_record.id) & (gff_df["end"] > genome_size)].loc[:, ["end"]] = genome_size
-gff_df.sort_values(["seqid", "start", "end"], inplace=True)
+    tmp_df = gff_df[gff_df["seqid"] == seq_record.id].copy()
+    tmp_df["start"].values[tmp_df["start"] < 1] = 1
+    tmp_df["end"].values[tmp_df["end"] > genome_size] = genome_size
+    out_gff_df = out_gff_df.append(tmp_df)
+out_gff_df.sort_values(["seqid", "start", "end"], inplace=True)
 print("Writing GFF file...")
 out_file_name = f"{path.dirname(args.gff_in)}/offset_added_{path.basename(args.gff_in)}"
-gff_df.to_csv(path.abspath(out_file_name), sep="\t", header=False, index=False)
+out_gff_df.to_csv(path.abspath(out_file_name), sep="\t", header=False, index=False)
