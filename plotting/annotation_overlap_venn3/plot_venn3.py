@@ -38,8 +38,8 @@ def main():
     ABC_merge_str, _, ABC = gff_mrg(ABC_merge_str, "abc_merge", 0, "overlaps").merge_overlaps()
 
     # Plot
-    plot(args.title, A_all, B_all, C_all, AB, BC, AC, ABC, args.gff_a_label.replace('_', ' '),
-         args.gff_b_label.replace('_', ' '), args.gff_c_label.replace('_', ' '), args.output)
+    plot(args.title, A_all, B_all, C_all, AB, BC, AC, ABC,
+         args.gff_a_label, args.gff_b_label, args.gff_c_label, args.output)
 
 
 def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, C_all_title, output):
@@ -53,7 +53,7 @@ def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, 
     subsets = (A, B, ABnotC, C, ACnotB, BCnotA, ABC)
     labels = (f"{A_all} {labels_wrapper(' '.join(A_all_title))}",
               f"{B_all} {labels_wrapper(' '.join(B_all_title))}",
-              f"{C_all} {' '.join(C_all_title)}")
+              f"{C_all} {labels_wrapper(' '.join(C_all_title))}")
     fig = plt.figure(figsize=(10, 6))
     venn3(subsets=subsets, set_labels=labels, alpha=0.5)
     plt.title(f"{A_all + B_all + C_all} {title.replace('_', ' ')}")
@@ -64,6 +64,6 @@ def labels_wrapper(label_str):
     spaces_indices = [i for i, a in enumerate(label_str) if a == " "]
     for i in range(4, len(spaces_indices), 5):
         label_str = label_str[:spaces_indices[i]] + "\n" + label_str[spaces_indices[i]+1:]
-    return label_str
+    return label_str.replace('_', ' ')
 
 main()
