@@ -47,7 +47,6 @@ def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, 
     ABnotC = AB - ABC
     BCnotA = BC - ABC
     ACnotB = AC - ABC
-
     A = A_all - (ABC + ABnotC + ACnotB)
     B = B_all - (ABC + ABnotC + BCnotA)
     C = C_all - (ABC + BCnotA + ACnotB)
