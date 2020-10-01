@@ -53,7 +53,7 @@ def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, 
     labels = (f"{A_all} {labels_wrapper(' '.join(A_all_title))}",
               f"{B_all} {labels_wrapper(' '.join(B_all_title))}",
               f"{C_all} {' '.join(C_all_title)}")
-    fig = plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(16, 9))
     venn3(subsets=subsets, set_labels=labels, alpha=0.5)
     plt.title(f"{A_all + B_all + C_all} {title}")
     fig.savefig(output)
