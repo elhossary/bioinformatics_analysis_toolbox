@@ -46,11 +46,12 @@ def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, 
     ABnotC = AB - ABC
     BCnotA = BC - ABC
     ACnotB = AC - ABC
-    C_all_title = C_all_title.replace('_', ' ')
+
     A = A_all - (ABC + ABnotC + ACnotB)
     B = B_all - (ABC + ABnotC + BCnotA)
     C = C_all - (ABC + BCnotA + ACnotB)
     subsets = (A, B, ABnotC, C, ACnotB, BCnotA, ABC)
+    C_all_title = C_all_title.replace('_', ' ')
     labels = (f"{A_all} {labels_wrapper(' '.join(A_all_title))}",
               f"{B_all} {labels_wrapper(' '.join(B_all_title))}",
               f"{C_all} {' '.join(C_all_title)}")
