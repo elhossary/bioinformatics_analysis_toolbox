@@ -50,12 +50,12 @@ def plot(title, A_all, B_all, C_all, AB, BC, AC, ABC, A_all_title, B_all_title, 
     B = B_all - (ABC + ABnotC + BCnotA)
     C = C_all - (ABC + BCnotA + ACnotB)
     subsets = (A, B, ABnotC, C, ACnotB, BCnotA, ABC)
-    labels = (f"{A_all} {labels_wrapper(' '.join(A_all_title.replace('_', ' ')))}",
-              f"{B_all} {labels_wrapper(' '.join(B_all_title.replace('_', ' ')))}",
+    labels = (f"{A_all} {labels_wrapper(' '.join(A_all_title))}",
+              f"{B_all} {labels_wrapper(' '.join(B_all_title))}",
               f"{C_all} {' '.join(C_all_title.replace('_', ' '))}")
     fig = plt.figure(figsize=(10, 6))
     venn3(subsets=subsets, set_labels=labels, alpha=0.5)
-    plt.title(f"{A_all + B_all + C_all} {title}")
+    plt.title(f"{A_all + B_all + C_all} {title.replace('_', ' ')}")
     fig.savefig(output)
 
 
@@ -63,6 +63,6 @@ def labels_wrapper(label_str):
     spaces_indices = [i for i, a in enumerate(label_str) if a == " "]
     for i in range(4, len(spaces_indices), 5):
         label_str = label_str[:spaces_indices[i]] + "\n" + label_str[spaces_indices[i]+1:]
-    return label_str
+    return label_str.replace('_', ' ')
 
 main()
