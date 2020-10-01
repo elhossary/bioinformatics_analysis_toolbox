@@ -66,4 +66,5 @@ def labels_wrapper(label_str):
         label_str = label_str[:spaces_indices[i]] + "\n" + label_str[spaces_indices[i]+1:]
     return label_str.replace('_', ' ')
 
+
 main()
