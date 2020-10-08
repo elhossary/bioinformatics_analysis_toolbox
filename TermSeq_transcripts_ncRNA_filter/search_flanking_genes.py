@@ -128,9 +128,15 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
                        f";down{prefix}dist={downstream_distance}"
             if not strandedness:
                 ret_str += f";down{prefix}strand={downstream_gene_strand}"
+            else:
+                ret_str += f";down{prefix}=-" \
+                           f";down{prefix}dist=-"
         if upstream_distance in allowed_range:
             ret_str += f";up{prefix}={upstream_gene}" \
                        f";up{prefix}dist={upstream_distance}"
+        else:
+            ret_str += f";up{prefix}=-" \
+                       f";up{prefix}dist=-"
             if not strandedness:
                 ret_str += f";up{prefix}strand={upstream_gene_strand}"
     else:
