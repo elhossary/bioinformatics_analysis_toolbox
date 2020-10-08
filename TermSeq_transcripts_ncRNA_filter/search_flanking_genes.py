@@ -63,9 +63,9 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             else:
                 upstream_gene_strand = "antisense"
         except:
-            upstream_gene = "-"
-            upstream_distance = "-"
-            upstream_gene_strand = "-"
+            upstream_gene = "_"
+            upstream_distance = "_"
+            upstream_gene_strand = "_"
         try:
             down_row = f_ref_df[f_ref_df["start"] >= gff_row.end].sort_values(["start"]).iloc[0]
             downstream_gene = parse_attributes(down_row["attributes"])["name"]
@@ -75,42 +75,42 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             else:
                 downstream_gene_strand = "antisense"
         except:
-            downstream_gene = "-"
-            downstream_distance = "-"
-            downstream_gene_strand = "-"
+            downstream_gene = "_"
+            downstream_distance = "_"
+            downstream_gene_strand = "_"
 
-    elif gff_row.strand == "-":
+    elif gff_row.strand == "_":
         r_ref_df = ref_df
         overlap_rows = r_ref_df[((r_ref_df["start"].isin(range(gff_row.start, gff_row.end + 1, 1))) &
-                                 (r_ref_df["strand"] == "-")) |
+                                 (r_ref_df["strand"] == "_")) |
                                 ((r_ref_df["end"].isin(range(gff_row.start, gff_row.end + 1, 1))) &
-                                 (r_ref_df["strand"] == "-"))]
+                                 (r_ref_df["strand"] == "_"))]
         if strandedness:
-            r_ref_df = ref_df[ref_df["strand"] == "-"]
+            r_ref_df = ref_df[ref_df["strand"] == "_"]
         try:
             down_row = r_ref_df[r_ref_df["end"] <= gff_row.start].sort_values(["end"], ascending=False).iloc[0]
             downstream_gene = parse_attributes(down_row["attributes"])["name"]
             downstream_distance = gff_row.start - down_row["end"]
-            if down_row.strand == "-":
+            if down_row.strand == "_":
                 downstream_gene_strand = "sense"
             else:
                 downstream_gene_strand = "antisense"
         except:
-            downstream_gene = "NONE"
-            downstream_distance = "NONE"
-            downstream_gene_strand = "NONE"
+            downstream_gene = "_"
+            downstream_distance = "_"
+            downstream_gene_strand = "_"
         try:
             up_row = r_ref_df[r_ref_df["start"] >= gff_row.end].sort_values(["start"]).iloc[0]
             upstream_gene = parse_attributes(up_row["attributes"])["name"]
             upstream_distance = up_row["start"] - gff_row.end
-            if up_row.strand == "-":
+            if up_row.strand == "_":
                 upstream_gene_strand = "sense"
             else:
                 upstream_gene_strand = "antisense"
         except:
-            upstream_gene = "NONE"
-            upstream_distance = "NONE"
-            upstream_gene_strand = "NONE"
+            upstream_gene = "_"
+            upstream_distance = "_"
+            upstream_gene_strand = "_"
 
     else:
         print("Fatal Error")
@@ -120,7 +120,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
         overlapping_genes = '|'.join([parse_attributes(i)["name"] for i in overlap_rows["attributes"].values.tolist()])
         ret_str += f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
     else:
-        ret_str += f";overlapping{prefix.replace('_flank', '')}=-"
+        ret_str += f";overlapping{prefix.replace('_flank', '')}=_"
 
     if allowed_range is not None:
         if downstream_distance in allowed_range:
@@ -129,14 +129,15 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             if not strandedness:
                 ret_str += f";down{prefix}strand={downstream_gene_strand}"
             else:
-                ret_str += f";down{prefix}=-" \
-                           f";down{prefix}dist=-"
+                ret_str += f";down{prefix}=_" \
+                           f";down{prefix}dist=_"
+
         if upstream_distance in allowed_range:
             ret_str += f";up{prefix}={upstream_gene}" \
                        f";up{prefix}dist={upstream_distance}"
         else:
-            ret_str += f";up{prefix}=-" \
-                       f";up{prefix}dist=-"
+            ret_str += f";up{prefix}=_" \
+                       f";up{prefix}dist=_"
             if not strandedness:
                 ret_str += f";up{prefix}strand={upstream_gene_strand}"
     else:
