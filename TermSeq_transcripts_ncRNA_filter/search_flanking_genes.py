@@ -63,9 +63,9 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             else:
                 upstream_gene_strand = "antisense"
         except:
-            upstream_gene = "NONE"
-            upstream_distance = "NONE"
-            upstream_gene_strand = "NONE"
+            upstream_gene = "-"
+            upstream_distance = "-"
+            upstream_gene_strand = "-"
         try:
             down_row = f_ref_df[f_ref_df["start"] >= gff_row.end].sort_values(["start"]).iloc[0]
             downstream_gene = parse_attributes(down_row["attributes"])["name"]
@@ -75,9 +75,9 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             else:
                 downstream_gene_strand = "antisense"
         except:
-            downstream_gene = "NONE"
-            downstream_distance = "NONE"
-            downstream_gene_strand = "NONE"
+            downstream_gene = "-"
+            downstream_distance = "-"
+            downstream_gene_strand = "-"
 
     elif gff_row.strand == "-":
         r_ref_df = ref_df
@@ -119,6 +119,8 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
     if not overlap_rows.empty and overlap_rows is not None:
         overlapping_genes = '|'.join([parse_attributes(i)["name"] for i in overlap_rows["attributes"].values.tolist()])
         ret_str += f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
+    else:
+        ret_str += f";overlapping{prefix.replace('_flank', '')}=-"
 
     if allowed_range is not None:
         if downstream_distance in allowed_range:
