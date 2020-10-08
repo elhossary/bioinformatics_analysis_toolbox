@@ -153,6 +153,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
     return gff_row
 
 
+
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
 
