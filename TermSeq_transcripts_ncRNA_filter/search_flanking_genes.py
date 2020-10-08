@@ -8,7 +8,7 @@ def main():
     parser.add_argument("--gff_in", required=True, help="", type=str)
     parser.add_argument("--ref_gff_in", required=True, help="", type=str)
     parser.add_argument("--gff_out", required=True, help="", type=str)
-    parser.add_argument("--flank_prefix", default="_flank_", help="", type=str)
+    parser.add_argument("--annotation_type", required=True, help="", type=str)
     parser.add_argument("--min_range", default=None, help="", type=int)
     parser.add_argument("--max_range", default=None, help="", type=int)
     parser.add_argument("--force_strandedness", default=False, help="", action='store_true')
@@ -17,7 +17,7 @@ def main():
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
     ref_gff_df = pd.read_csv(path.abspath(args.ref_gff_in), names=col_names, sep="\t", comment="#")
-    ref_gff_df = ref_gff_df[ref_gff_df["type"] == "gene"]
+    ref_gff_df = ref_gff_df[ref_gff_df["type"] == args.annotation_type]
 
     df_dict = {}
     for seqid in gff_df["seqid"].unique():
@@ -32,7 +32,7 @@ def main():
     gff_df = gff_df.apply(lambda x: append_flanking_genes_to_attributes(x, df_dict[x.seqid], args.force_strandedness,
                                                                         args.combine_flanks_info,
                                                                         distance_range,
-                                                                        args.flank_prefix), axis=1)
+                                                                        f"_{args.annotation_type}_flank_"), axis=1)
     print("Writing GFF file")
     gff_df.to_csv(path.abspath(args.gff_out), sep="\t", index=False, header=False)
 
