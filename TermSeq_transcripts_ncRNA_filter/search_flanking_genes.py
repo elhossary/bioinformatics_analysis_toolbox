@@ -3,8 +3,29 @@ import pandas as pd
 from os import path
 
 
-def parse_attributes(attr_str):
-    return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--gff_in", required=True, help="", type=str)
+    parser.add_argument("--ref_gff_in", required=True, help="", type=str)
+    parser.add_argument("--gff_out", required=True, help="", type=str)
+    parser.add_argument("--force_strandedness", default=False, help="", action='store_true')
+    parser.add_argument("--combine_flanks_info", default=False, help="", action='store_true')
+    args = parser.parse_args()
+    col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
+    gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
+    ref_gff_df = pd.read_csv(path.abspath(args.ref_gff_in), names=col_names, sep="\t", comment="#")
+    ref_gff_df = ref_gff_df[ref_gff_df["type"] == "gene"]
+
+    df_dict = {}
+    for seqid in gff_df["seqid"].unique():
+        df_dict[seqid] = ref_gff_df[ref_gff_df["seqid"] == seqid]
+        if df_dict[seqid].empty:
+            df_dict[seqid] = None
+            print(f"Cannot find {seqid} in the reference annotations")
+    gff_df = gff_df.apply(lambda x: append_flanking_genes_to_attributes(x, df_dict[x.seqid], args.force_strandedness,
+                                                                        args.combine_flanks_info), axis=1)
+    print("Writing GFF file")
+    gff_df.to_csv(path.abspath(args.gff_out), sep="\t", index=False, header=False)
 
 
 def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine):
@@ -106,26 +127,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine):
                               f";overlapping_genes={overlapping_genes}"
     return gff_row
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--gff_in", required=True, help="", type=str)
-parser.add_argument("--ref_gff_in", required=True, help="", type=str)
-parser.add_argument("--gff_out", required=True, help="", type=str)
-parser.add_argument("--force_strandedness", default=False, help="", action='store_true')
-parser.add_argument("--combine_flanks_info", default=False, help="", action='store_true')
-args = parser.parse_args()
-col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
-gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
-ref_gff_df = pd.read_csv(path.abspath(args.ref_gff_in), names=col_names, sep="\t", comment="#")
-ref_gff_df = ref_gff_df[ref_gff_df["type"] == "gene"]
+def parse_attributes(attr_str):
+    return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
 
-df_dict = {}
-for seqid in gff_df["seqid"].unique():
-    df_dict[seqid] = ref_gff_df[ref_gff_df["seqid"] == seqid]
-    if df_dict[seqid].empty:
-        df_dict[seqid] = None
-        print(f"Cannot find {seqid} in the reference annotations")
-gff_df = gff_df.apply(lambda x: append_flanking_genes_to_attributes(x, df_dict[x.seqid], args.force_strandedness,
-                                                                    args.combine_flanks_info), axis=1)
-print("Writing GFF file")
-gff_df.to_csv(path.abspath(args.gff_out), sep="\t", index=False, header=False)
-exit(0)
+main()
