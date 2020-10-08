@@ -126,12 +126,11 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
         if downstream_distance in allowed_range:
             ret_str += f";down{prefix}={downstream_gene}" \
                        f";down{prefix}dist={downstream_distance}"
+        else:
+            ret_str += f";down{prefix}=_" \
+                       f";down{prefix}dist=_"
             if not strandedness:
                 ret_str += f";down{prefix}strand={downstream_gene_strand}"
-            else:
-                ret_str += f";down{prefix}=_" \
-                           f";down{prefix}dist=_"
-
         if upstream_distance in allowed_range:
             ret_str += f";up{prefix}={upstream_gene}" \
                        f";up{prefix}dist={upstream_distance}"
@@ -151,7 +150,6 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             ret_str += f";up{prefix}strand={upstream_gene_strand}"
     gff_row["attributes"] += ret_str
     return gff_row
-
 
 
 def parse_attributes(attr_str):
