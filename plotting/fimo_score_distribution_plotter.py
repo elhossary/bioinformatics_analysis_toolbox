@@ -18,7 +18,7 @@ def main():
     plt.hist(values, bins=bins)
     plt.title(f"FUR binding sites scores distribution\n"
               f"count: {disc['count']}, mean: {round(disc['mean'], 2)}, max: {disc['max']}, median: {disc['50%']}")
-    plt.xlabel(f"FUR binding score (decimal points rounded)")
+    plt.xlabel(f"FUR binding score")
     plt.ylabel("Frequency")
     plt.grid(True)
     fig.savefig(os.path.abspath(f"{args.out_file}"))
