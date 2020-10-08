@@ -12,7 +12,6 @@ def main():
     parser.add_argument("--min_range", default=None, help="", type=int)
     parser.add_argument("--max_range", default=None, help="", type=int)
     parser.add_argument("--force_strandedness", default=False, help="", action='store_true')
-    parser.add_argument("--combine_flanks_info", default=False, help="", action='store_true')
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
@@ -30,14 +29,13 @@ def main():
     else:
         distance_range = None
     gff_df = gff_df.apply(lambda x: append_flanking_genes_to_attributes(x, df_dict[x.seqid], args.force_strandedness,
-                                                                        args.combine_flanks_info,
                                                                         distance_range,
                                                                         f"_{args.annotation_type}_flank_"), axis=1)
     print("Writing GFF file")
     gff_df.to_csv(path.abspath(args.gff_out), sep="\t", index=False, header=False)
 
 
-def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, allowed_range, prefix):
+def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_range, prefix):
     if ref_df is None:
         return gff_row
     downstream_distance = 0
@@ -47,7 +45,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
     downstream_gene_strand = ""
     upstream_gene_strand = ""
     overlap_rows = None
-
+    ret_str = ""
     if gff_row.strand == "+":
         f_ref_df = ref_df
         overlap_rows = f_ref_df[((f_ref_df["start"].isin(range(gff_row.start + 1, gff_row.end, 1))) &
@@ -120,46 +118,30 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
 
     if not overlap_rows.empty and overlap_rows is not None:
         overlapping_genes = '|'.join([parse_attributes(i)["name"] for i in overlap_rows["attributes"].values.tolist()])
-    else:
-        overlapping_genes = "NONE"
-    gff_row["attributes"] += f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
-    if strandedness:
-        down_strandedness_text = ""
-        up_strandedness_text = ""
-    else:
-        down_strandedness_text = f";down{prefix}strand={downstream_gene_strand}"
-        up_strandedness_text = f";up{prefix}strand={upstream_gene_strand}"
+        ret_str += f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
 
     if allowed_range is not None:
         if downstream_distance in allowed_range:
-            if combine:
-                gff_row["attributes"] += f";down{prefix}={downstream_gene}|{downstream_gene_strand}|{downstream_distance}"
-            else:
-                gff_row["attributes"] += f";down{prefix}={downstream_gene}" \
-                                         f";down{prefix}dist={downstream_distance}" \
-                                         f"{down_strandedness_text}"
+            ret_str += f";down{prefix}={downstream_gene}" \
+                       f";down{prefix}dist={downstream_distance}"
+            if not strandedness:
+                ret_str += f";down{prefix}strand={downstream_gene_strand}"
         if upstream_distance in allowed_range:
-            if combine:
-                gff_row["attributes"] += f";up{prefix}={upstream_gene}|{upstream_gene_strand}|{upstream_distance}"
-            else:
-                gff_row["attributes"] += f";up{prefix}={upstream_gene}" \
-                                         f";up{prefix}dist={upstream_distance}" \
-                                         f"{up_strandedness_text}"
-        return gff_row
+            ret_str += f";up{prefix}={upstream_gene}" \
+                       f";up{prefix}dist={upstream_distance}"
+            if not strandedness:
+                ret_str += f";up{prefix}strand={upstream_gene_strand}"
     else:
-        if combine:
-            gff_row.attributes += f";up{prefix}={upstream_gene}|{upstream_gene_strand}|{upstream_distance}" \
-                                  f";down{prefix}={downstream_gene}|{downstream_gene_strand}|{downstream_distance}" \
-                                  f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
-        else:
-            gff_row.attributes += f";up{prefix}={upstream_gene}" \
-                                  f";up{prefix}dist={upstream_distance}" \
-                                  f"{up_strandedness_text}" \
-                                  f";down{prefix}={downstream_gene}" \
-                                  f";down{prefix}dist={downstream_distance}" \
-                                  f"{down_strandedness_text}" \
-                                  f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
-        return gff_row
+        ret_str += f";down{prefix}={downstream_gene}" \
+                   f";down{prefix}dist={downstream_distance}"
+        if not strandedness:
+            ret_str += f";down{prefix}strand={downstream_gene_strand}"
+        ret_str += f";up{prefix}={upstream_gene}" \
+                   f";up{prefix}dist={upstream_distance}"
+        if not strandedness:
+            ret_str += f";up{prefix}strand={upstream_gene_strand}"
+    gff_row["attributes"] += ret_str
+    return gff_row
 
 
 def parse_attributes(attr_str):
