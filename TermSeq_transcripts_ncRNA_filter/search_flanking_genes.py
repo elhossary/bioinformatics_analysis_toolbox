@@ -132,18 +132,18 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
     if allowed_range is not None:
         if downstream_distance in allowed_range:
             if combine:
-                down_dist_text = f";down{prefix}{downstream_gene}|{downstream_gene_strand}|{downstream_distance}"
+                down_dist_text = f";down{prefix}={downstream_gene}|{downstream_gene_strand}|{downstream_distance}"
             else:
-                down_dist_text = f";down{prefix}{downstream_gene}" \
+                down_dist_text = f";down{prefix}={downstream_gene}" \
                                  f";down{prefix}dist={downstream_distance}" \
                                  f"{down_strandedness_text}"
         else:
             down_dist_text = ""
         if upstream_distance in allowed_range:
             if combine:
-                up_dist_text = f";up{prefix}{upstream_gene}|{upstream_gene_strand}|{upstream_distance}"
+                up_dist_text = f";up{prefix}={upstream_gene}|{upstream_gene_strand}|{upstream_distance}"
             else:
-                up_dist_text = f";up{prefix}{upstream_gene}" \
+                up_dist_text = f";up{prefix}={upstream_gene}" \
                                f";up{prefix}dist={upstream_distance}" \
                                f"{up_strandedness_text}"
         else:
@@ -153,17 +153,17 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
         return gff_row
     else:
         if combine:
-            gff_row.attributes += f";up{prefix}{upstream_gene}|{upstream_gene_strand}|{upstream_distance}" \
-                                  f";down{prefix}{downstream_gene}|{downstream_gene_strand}|{downstream_distance}" \
-                                  f";overlapping_{prefix.replace('_flank', '')}"
+            gff_row.attributes += f";up{prefix}={upstream_gene}|{upstream_gene_strand}|{upstream_distance}" \
+                                  f";down{prefix}={downstream_gene}|{downstream_gene_strand}|{downstream_distance}" \
+                                  f";overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
         else:
-            gff_row.attributes += f";up{prefix}{upstream_gene}" \
+            gff_row.attributes += f";up{prefix}={upstream_gene}" \
                                   f";up{prefix}dist={upstream_distance}" \
                                   f"{up_strandedness_text}" \
-                                  f";down{prefix}{downstream_gene}" \
+                                  f";down{prefix}={downstream_gene}" \
                                   f";down{prefix}dist={downstream_distance}" \
                                   f"{down_strandedness_text}" \
-                                  f";overlapping_{prefix.replace('_flank', '')}"
+                                  f";overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
         return gff_row
 
 
