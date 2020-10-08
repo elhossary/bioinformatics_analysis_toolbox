@@ -149,13 +149,13 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
         else:
             up_dist_text = ""
         gff_row.attributes +=\
-            f"{down_dist_text}{up_dist_text};overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
+            f"{down_dist_text}{up_dist_text};overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
         return gff_row
     else:
         if combine:
             gff_row.attributes += f";up{prefix}={upstream_gene}|{upstream_gene_strand}|{upstream_distance}" \
                                   f";down{prefix}={downstream_gene}|{downstream_gene_strand}|{downstream_distance}" \
-                                  f";overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
+                                  f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
         else:
             gff_row.attributes += f";up{prefix}={upstream_gene}" \
                                   f";up{prefix}dist={upstream_distance}" \
@@ -163,7 +163,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
                                   f";down{prefix}={downstream_gene}" \
                                   f";down{prefix}dist={downstream_distance}" \
                                   f"{down_strandedness_text}" \
-                                  f";overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
+                                  f";overlapping{prefix.replace('_flank', '')}={overlapping_genes}"
         return gff_row
 
 
