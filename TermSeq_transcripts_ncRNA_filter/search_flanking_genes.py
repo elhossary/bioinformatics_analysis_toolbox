@@ -123,11 +123,11 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
     else:
         overlapping_genes = "NONE"
     if strandedness:
-        down_strandedness_text = f";down{prefix}strand={downstream_gene_strand}"
-        up_strandedness_text = f";up{prefix}strand={upstream_gene_strand}"
-    else:
         down_strandedness_text = ""
         up_strandedness_text = ""
+    else:
+        down_strandedness_text = f";down{prefix}strand={downstream_gene_strand}"
+        up_strandedness_text = f";up{prefix}strand={upstream_gene_strand}"
 
     if allowed_range is not None:
         if downstream_distance in allowed_range:
@@ -148,13 +148,14 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
                                f"{up_strandedness_text}"
         else:
             up_dist_text = ""
-        gff_row.attributes += f"{down_dist_text}{up_dist_text};overlapping_with={overlapping_genes}"
+        gff_row.attributes +=\
+            f"{down_dist_text}{up_dist_text};overlapping_{prefix.replace('_flank', '')}={overlapping_genes}"
         return gff_row
     else:
         if combine:
             gff_row.attributes += f";up{prefix}{upstream_gene}|{upstream_gene_strand}|{upstream_distance}" \
                                   f";down{prefix}{downstream_gene}|{downstream_gene_strand}|{downstream_distance}" \
-                                  f";overlapping_with={overlapping_genes}"
+                                  f";overlapping_{prefix.replace('_flank', '')}"
         else:
             gff_row.attributes += f";up{prefix}{upstream_gene}" \
                                   f";up{prefix}dist={upstream_distance}" \
@@ -162,7 +163,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, combine, 
                                   f";down{prefix}{downstream_gene}" \
                                   f";down{prefix}dist={downstream_distance}" \
                                   f"{down_strandedness_text}" \
-                                  f";overlapping_with={overlapping_genes}"
+                                  f";overlapping_{prefix.replace('_flank', '')}"
         return gff_row
 
 
