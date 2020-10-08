@@ -10,7 +10,7 @@ def main():
     args = parser.parse_args()
 
     df = pd.read_csv(os.path.abspath(args.fimo_tsv_file), sep="\t")
-    df["score"] = df["score"].round(0)
+    #df["score"] = df["score"].round(0)
     bins = len(df["score"].unique().tolist())
     disc = df["score"].describe()
     values = df["score"].tolist()
