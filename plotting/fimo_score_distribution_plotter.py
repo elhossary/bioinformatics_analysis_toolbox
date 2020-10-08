@@ -21,7 +21,7 @@ def main():
     plt.xlabel(f"FUR binding score (decimal points rounded)")
     plt.ylabel("Frequency")
     plt.grid(True)
-    fig.savefig(os.path.abspath(f"{args.out_file}.png"))
+    fig.savefig(os.path.abspath(f"{args.out_file}"))
 
 
 main()
