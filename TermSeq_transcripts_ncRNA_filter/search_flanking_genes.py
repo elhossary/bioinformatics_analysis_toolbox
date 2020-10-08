@@ -79,19 +79,19 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             downstream_distance = "_"
             downstream_gene_strand = "_"
 
-    elif gff_row.strand == "_":
+    elif gff_row.strand == "-":
         r_ref_df = ref_df
         overlap_rows = r_ref_df[((r_ref_df["start"].isin(range(gff_row.start, gff_row.end + 1, 1))) &
-                                 (r_ref_df["strand"] == "_")) |
+                                 (r_ref_df["strand"] == "-")) |
                                 ((r_ref_df["end"].isin(range(gff_row.start, gff_row.end + 1, 1))) &
-                                 (r_ref_df["strand"] == "_"))]
+                                 (r_ref_df["strand"] == "-"))]
         if strandedness:
-            r_ref_df = ref_df[ref_df["strand"] == "_"]
+            r_ref_df = ref_df[ref_df["strand"] == "-"]
         try:
             down_row = r_ref_df[r_ref_df["end"] <= gff_row.start].sort_values(["end"], ascending=False).iloc[0]
             downstream_gene = parse_attributes(down_row["attributes"])["name"]
             downstream_distance = gff_row.start - down_row["end"]
-            if down_row.strand == "_":
+            if down_row.strand == "-":
                 downstream_gene_strand = "sense"
             else:
                 downstream_gene_strand = "antisense"
@@ -103,7 +103,7 @@ def append_flanking_genes_to_attributes(gff_row, ref_df, strandedness, allowed_r
             up_row = r_ref_df[r_ref_df["start"] >= gff_row.end].sort_values(["start"]).iloc[0]
             upstream_gene = parse_attributes(up_row["attributes"])["name"]
             upstream_distance = up_row["start"] - gff_row.end
-            if up_row.strand == "_":
+            if up_row.strand == "-":
                 upstream_gene_strand = "sense"
             else:
                 upstream_gene_strand = "antisense"
