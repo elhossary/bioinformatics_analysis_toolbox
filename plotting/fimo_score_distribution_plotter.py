@@ -7,6 +7,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fimo_tsv_file", required=True, help="", type=str)
     parser.add_argument("--out_file", required=True, help="", type=str)
+    parser.add_argument("--title", help="", type=str)
     args = parser.parse_args()
 
     df = pd.read_csv(os.path.abspath(args.fimo_tsv_file), sep="\t")
@@ -16,9 +17,9 @@ def main():
     values = df["score"].tolist()
     fig = plt.figure(figsize=(16, 9))
     plt.hist(values, bins=bins)
-    plt.title(f"FUR binding sites scores distribution\n"
+    plt.title(f"{args.title}\n"
               f"count: {disc['count']}, mean: {round(disc['mean'], 2)}, max: {disc['max']}, median: {disc['50%']}")
-    plt.xlabel(f"FUR binding score")
+    plt.xlabel(f"Score")
     plt.ylabel("Frequency")
     plt.grid(True)
     fig.savefig(os.path.abspath(f"{args.out_file}"))
