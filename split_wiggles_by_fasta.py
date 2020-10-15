@@ -23,9 +23,8 @@ def main():
     for item in args.wiggle_files:
         for sub_item in glob.glob(item):
             wiggle_pathes.append(os.path.abspath(sub_item))
-    fasta_seqids = [{os.path.splitext(os.path.basename(path))[0]:
-                         list(set([rec.id for rec in SeqIO.parse(path, "fasta")]))} for path in fasta_pathes]
-
+    fasta_seqids = [{os.path.splitext(os.path.basename(path))[0]
+                     : list(set([rec.id for rec in SeqIO.parse(path, "fasta")]))} for path in fasta_pathes]
     unsplitted = ""
     for wig in wiggle_pathes:
         print(f"Splitting file: {os.path.basename(wig)}")
