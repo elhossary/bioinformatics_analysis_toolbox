@@ -5,6 +5,7 @@ import glob
 from Bio import SeqIO
 import re
 import argparse
+import time
 
 
 def main():
@@ -14,7 +15,6 @@ def main():
     parser.add_argument("--output_dir", default=None, help="", type=str)
     parser.add_argument("--keep_missing", action='store_true', help="")
     args = parser.parse_args()
-
     fasta_pathes = []
     for item in args.refseq_files:
         for sub_item in glob.glob(item):
@@ -24,9 +24,11 @@ def main():
         for sub_item in glob.glob(item):
             wiggle_pathes.append(os.path.abspath(sub_item))
     fasta_seqids = [{os.path.splitext(os.path.basename(path))[0]:
-                         [rec.id for rec in SeqIO.parse(path, "fasta")]} for path in fasta_pathes]
+                         list(set([rec.id for rec in SeqIO.parse(path, "fasta")]))} for path in fasta_pathes]
+
     unsplitted = ""
     for wig in wiggle_pathes:
+        print(f"Splitting file: {os.path.basename(wig)}")
         with open(wig, "r") as rf:
             header_text, content_dict = parse_wig_str(rf.read())
             for fasta_seqids_list in fasta_seqids:
@@ -54,9 +56,15 @@ def main():
 def parse_wig_str(in_str):
     ret_dict = {}
     header_text = in_str.split("\n", maxsplit=1)[0]
+    in_str = in_str.replace(header_text + "\n", "")
     all_headers = re.findall(r'^.*chrom=.*$', in_str, flags=re.MULTILINE | re.IGNORECASE)
+    splitters = ""
     for header in all_headers:
-        ret_dict[header] = in_str.split(header)[1]
+        splitters += header + "|"
+    splitters = f"{splitters[:-1]}"
+    content_list = [i for i in re.split(rf"({splitters})", in_str, flags=re.MULTILINE | re.IGNORECASE) if i != '']
+    for i in range(0, len(content_list), 2):
+        ret_dict[content_list[i]] = content_list[i + 1]
     return header_text, ret_dict
 
 
