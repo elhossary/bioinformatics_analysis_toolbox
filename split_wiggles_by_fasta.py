@@ -26,7 +26,13 @@ def main():
     fasta_seqids = {}
     for path in fasta_pathes:
         fasta_seqids[os.path.splitext(os.path.basename(path))[0]] = [rec.id for rec in SeqIO.parse(path, "fasta")]
-    unsplitted = ""
+
+    all_seqids = []
+    for v in fasta_seqids.values():
+        for i in v:
+            if i not in all_seqids:
+                all_seqids.append(i)
+    print(all_seqids)
     for wig in wiggle_pathes:
         if args.output_dir is None:
             output_dir = os.path.dirname(wig)
@@ -44,14 +50,20 @@ def main():
                         if seqid in header:
                             wf.write(header)
                             wf.write(content_dict[header])
-                        else:
-                            unsplitted += header
-                            unsplitted += content_dict[header]
-            if args.keep_missing:
-                print(f"==> Writing {output_dir}/UNDEFINED_{os.path.basename(wig)}")
+        if args.keep_missing:
+            drop_headers = []
+            for header in content_dict.keys():
+                for seqid in all_seqids:
+                    if seqid in header:
+                        drop_headers.append(header)
+            for item in drop_headers:
+                del content_dict[item]
+            if len(content_dict) > 0:
+                print(f"==> Writing UNDEFINED_{os.path.basename(wig)}")
                 with open(f"{output_dir}/UNDEFINED_{os.path.basename(wig)}", "w") as wf2:
-                    wf2.write(f"{header_text}\n")
-                    wf2.write(unsplitted)
+                    for header in content_dict.keys():
+                        wf2.write(header)
+                        wf2.write(content_dict[header])
 
 
 def parse_wig_str(in_str):
