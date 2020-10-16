@@ -32,7 +32,6 @@ def main():
         for i in v:
             if i not in all_seqids:
                 all_seqids.append(i)
-    print(all_seqids)
     for wig in wiggle_pathes:
         if args.output_dir is None:
             output_dir = os.path.dirname(wig)
