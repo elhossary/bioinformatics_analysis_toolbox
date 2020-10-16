@@ -63,7 +63,8 @@ def parse_wig_str(in_str):
     for header in all_headers:
         splitters += header + "|"
     splitters = f"({splitters[:-1]})"
-    content_list = [i for i in re.split(rf"{splitters}", in_str, flags=re.MULTILINE | re.IGNORECASE) if i != '']
+    split_str_list = re.split(rf"{splitters}", in_str, flags=re.MULTILINE | re.IGNORECASE)
+    content_list = [i for i in split_str_list if i != '']
     for i in range(0, len(content_list), 2):
         ret_dict[content_list[i]] = content_list[i + 1]
     return header_text, ret_dict
