@@ -36,7 +36,7 @@ def main():
                         output_dir = os.path.dirname(wig)
                     else:
                         output_dir = args.output_dir
-                    print(f"Writing {prefix}_{os.path.basename(wig)}")
+                    print(f"==> Writing {prefix}_{os.path.basename(wig)}")
                     with open(f"{output_dir}/{prefix}_{os.path.basename(wig)}", "w") as wf:
                         wf.write(f"{header_text}\n")
                         for seqid in seqids:
@@ -48,7 +48,7 @@ def main():
                                     unsplitted += header
                                     unsplitted += content_dict[header]
                     if args.keep_missing:
-                        print(f"Writing {output_dir}/UNDEFINED_{os.path.basename(wig)}")
+                        print(f"==> Writing {output_dir}/UNDEFINED_{os.path.basename(wig)}")
                         with open(f"{output_dir}/UNDEFINED_{os.path.basename(wig)}", "w") as wf2:
                             wf2.write(f"{header_text}\n")
                             wf2.write(unsplitted)
