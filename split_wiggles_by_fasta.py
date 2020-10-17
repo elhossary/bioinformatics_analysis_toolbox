@@ -5,8 +5,6 @@ import glob
 from Bio import SeqIO
 import re
 import argparse
-import time
-
 
 def main():
     parser = argparse.ArgumentParser()
