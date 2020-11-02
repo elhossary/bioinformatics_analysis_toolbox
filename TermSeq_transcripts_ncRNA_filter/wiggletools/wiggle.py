@@ -42,7 +42,7 @@ class Wiggle:
     def _parse_wiggle_str(in_str):
         ret_dict = {}
         header_text = in_str.split("\n", maxsplit=1)[0]
-        in_str = in_str.replace(header_text + "\n", "")
+        in_str = in_str.replace(f"{header_text}\n", "")
         all_headers = re.findall(r'^.*chrom=.*$', in_str, flags=re.MULTILINE | re.IGNORECASE)
         splitters = ""
         for header in all_headers:

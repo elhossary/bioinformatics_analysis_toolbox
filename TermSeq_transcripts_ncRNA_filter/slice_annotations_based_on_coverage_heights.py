@@ -94,7 +94,7 @@ def main():
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
 
-def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos=None):
+def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos=None, counter=0):
     if ret_pos is None:
         ret_pos = []
     max_score = coverage_df[score_col].max()
@@ -108,6 +108,8 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
 
     max_score_loc = coverage_df.iloc[peaks[0]]['location']
     tmp_df = coverage_df[coverage_df[score_col] >= remove_limit]
+    if tmp_df.shape[0] == coverage_df.shape[0]:
+        ret_pos
     single_sites = []
     for cg in consecutive_groups(tmp_df['location'].tolist()):
         consecutive_loc = list(cg)
