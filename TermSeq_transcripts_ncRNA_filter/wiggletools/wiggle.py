@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import csv
 import numpy as np
+import re
 
 
 class Wiggle:
@@ -14,31 +15,44 @@ class Wiggle:
         self.orientation = None
 
     def parse(self):
-        tmp_dict = {}
         current_wiggle_meta = {}
         with open(self.file_path, "r") as raw_file:
             print(f"==> Loading file: {os.path.basename(self.file_path)}")
-            for line in raw_file.readlines():
-                if line[0].isnumeric():
-                    tmp_dict[int(line.split(" ")[0])] = float(line.split(" ")[1].replace("\n", ""))
+            file_header, all_contents = self._parse_wiggle_str(raw_file.read())
+            current_wiggle_meta = self.parse_wiggle_header(file_header, current_wiggle_meta)
+            tmp_dict = {}
+            for content_header, content in all_contents.items():
+                if "-" in content:
+                    self.orientation = "r"
                 else:
-                    if 0 <= len(current_wiggle_meta.keys()) <= 2:
-                        current_wiggle_meta = self.parse_wiggle_header(line, current_wiggle_meta)
-                    else:
-                        self.raw_data.append({"track_type": current_wiggle_meta["track_type"],
-                                              "track_name": current_wiggle_meta["track_name"],
-                                              "variableStep_chrom": current_wiggle_meta["variableStep_chrom"],
-                                              "variableStep_span": current_wiggle_meta["variableStep_span"],
-                                              "data": tmp_dict.copy()})
-                        current_wiggle_meta = self.parse_wiggle_header(line, current_wiggle_meta)
-                        tmp_dict.clear()
-            # 2 lines repeated because of the file end
-            self.raw_data.append({"track_type": current_wiggle_meta["track_type"],
-                                  "track_name": current_wiggle_meta["track_name"],
-                                  "variableStep_chrom": current_wiggle_meta["variableStep_chrom"],
-                                  "variableStep_span": current_wiggle_meta["variableStep_span"],
-                                  "data": tmp_dict.copy()})
-            tmp_dict.clear()
+                    self.orientation = "f"
+                for i in content.split("\n"):
+                    line_split = i.split(" ")
+                    if len(line_split) == 2:
+                        tmp_dict[int(line_split[0])] = float(line_split[1])
+                current_wiggle_meta = self.parse_wiggle_header(content_header, current_wiggle_meta)
+                self.raw_data.append({"track_type": current_wiggle_meta["track_type"],
+                                      "track_name": current_wiggle_meta["track_name"],
+                                      "variableStep_chrom": current_wiggle_meta["variableStep_chrom"],
+                                      "variableStep_span": current_wiggle_meta["variableStep_span"],
+                                      "data": tmp_dict.copy()})
+
+
+    @staticmethod
+    def _parse_wiggle_str(in_str):
+        ret_dict = {}
+        header_text = in_str.split("\n", maxsplit=1)[0]
+        in_str = in_str.replace(header_text + "\n", "")
+        all_headers = re.findall(r'^.*chrom=.*$', in_str, flags=re.MULTILINE | re.IGNORECASE)
+        splitters = ""
+        for header in all_headers:
+            splitters += header + "|"
+        splitters = f"({splitters[:-1]})"
+        split_str_list = re.split(rf"{splitters}", in_str, flags=re.MULTILINE | re.IGNORECASE)
+        content_list = [i for i in split_str_list if i != '']
+        for i in range(0, len(content_list), 2):
+            ret_dict[content_list[i]] = content_list[i + 1]
+        return header_text, ret_dict
 
     @staticmethod
     def parse_wiggle_header(line, current_wiggle_meta):
@@ -66,17 +80,7 @@ class Wiggle:
             self._extend_raw_data_to_full_length_dataframe()
         else:
             self._extend_raw_data_to_min_length_dataframe()
-        self.wiggle_df["location"] = self.wiggle_df["location"].astype(int)
-        self.wiggle_df["score"] = self.wiggle_df["score"].astype(float)
-
         condition_name = self.wiggle_df["track_name"].unique().tolist()
-        if self.wiggle_df[self.wiggle_df["score"] < 0].empty:
-            self.orientation = "f"
-        elif self.wiggle_df[self.wiggle_df["score"] > 0].empty:
-            self.orientation = "r"
-        else:
-            print("Error identifying wiggle orientation")
-            exit(1)
 
         # Logging
         s = '\n     └── '
@@ -155,7 +159,7 @@ class Wiggle:
             f.write(out_df.to_csv(index=False, header=False, sep="\n",
                                   quoting=csv.QUOTE_NONE, quotechar="'", escapechar="\\").replace("\\", ""))
 
-    def to_percentile(self, nth, inplace=False):
+    def to_percentile(self, nth, scope="global", inplace=False):
         self._to_dataframe()
         print(f"==> Transforming to {nth} percentile")
         ret_df = self.wiggle_df
@@ -164,9 +168,22 @@ class Wiggle:
             col = ret_df[ret_df["variableStep_chrom"] == seqid]["score"]
             if self.orientation == "r":
                 col = col.abs()
-                ret_df.loc[ret_df["variableStep_chrom"] == seqid, "score"] = (col / np.percentile(col, nth)) * -1
+                if scope == "global":
+                    ret_df.loc[ret_df["variableStep_chrom"] == seqid, "score"] = (col / np.percentile(col, nth)) * -1
+                elif scope == "stretch":
+                    pass
+                    # TODO
+                else:
+                    print("Bad option")
             else:
-                ret_df.loc[ret_df["variableStep_chrom"] == seqid, "score"] = (col / np.percentile(col, nth))
+                if scope == "global":
+                    ret_df.loc[ret_df["variableStep_chrom"] == seqid, "score"] = (col / np.percentile(col, nth))
+                elif scope == "stretch":
+                    pass
+                    # TODO
+                else:
+                    print("Bad option")
+
         ret_df["score"] = ret_df["score"].replace([np.nan, np.inf, -np.inf], 0.0)
         if inplace:
             self.wiggle_df = ret_df
@@ -243,6 +260,38 @@ class Wiggle:
         else:
             ret_df["score"] = np.log10(ret_df["score"].replace([0, 0.0], np.nan))
         ret_df["score"] = ret_df["score"].replace([np.nan, np.inf, -np.inf], 0.0)
+        if inplace:
+            self.wiggle_df = ret_df
+            del ret_df
+        else:
+            return ret_df
+
+    def arithmethic(self, opt, value, inplace=False):
+        self._to_dataframe()
+        ret_df = self.wiggle_df
+        if opt == "add":
+            print(f"==> Adding {value} to coverage")
+            #TODO
+        elif opt == "sub":
+            print(f"==> Subtracting {value} from coverage")
+            #TODO
+        elif opt == "mul":
+            print(f"==> Multiplying coverage by {value}")
+            if self.orientation == "r":
+                ret_df["score"] = ret_df["score"].abs().multiply(value).multiply(-1)
+            else:
+                ret_df["score"] = ret_df["score"].multiply(value)
+            ret_df["score"] = ret_df["score"].replace([np.nan, np.inf, -np.inf], 0.0)
+        elif opt == "div":
+            print(f"==> Dividing coverage by {value} ")
+            if self.orientation == "r":
+                ret_df["score"] = (ret_df["score"].abs() / value) * -1
+            else:
+                ret_df["score"] = ret_df["score"] / value
+            ret_df["score"] = ret_df["score"].replace([np.nan, np.inf, -np.inf], 0.0)
+        else:
+            print("Bad option")
+            exit(1)
         if inplace:
             self.wiggle_df = ret_df
             del ret_df
