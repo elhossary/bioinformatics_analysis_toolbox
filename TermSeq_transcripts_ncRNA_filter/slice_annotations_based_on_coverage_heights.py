@@ -20,7 +20,6 @@ def main():
     parser.add_argument("--gff_in", required=True, help="", type=str)
     parser.add_argument("--refseq_in", required=True, help="", type=str)
     parser.add_argument("--wigs_in", required=True, help="", type=str, nargs="+")
-    parser.add_argument("--trimming_factor", default=1.0, help="", type=float)
     parser.add_argument("--merge_range", default=20, help="", type=int)
     parser.add_argument("--min_len", default=35, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
