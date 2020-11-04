@@ -5,15 +5,12 @@ import multiprocessing as mp
 from Bio import SeqIO
 import sys
 from statistics import mean, median
-import operator
-import itertools
-import numpy as np
-from scipy.stats import percentileofscore
 from more_itertools import consecutive_groups
-from scipy.signal import find_peaks, peak_prominences, peak_widths
+from scipy.signal import find_peaks
 import glob
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -60,14 +57,16 @@ def main():
                 if strand == "+":
                     for score_column in f_scores_columns:
                         ret_result = slice_annotation_recursively(
-                            f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].loc[:, ["location", score_column]],
+                            f_wig_df_slice[f_wig_df_slice["location"]
+                                .between(start, end)].loc[:, ["location", score_column]],
                             score_column, args.min_len, args.max_len)
                         if ret_result is not None and ret_result:
                             list_out.extend(ret_result)
                 elif strand == "-":
                     for score_column in r_scores_columns:
                         ret_result = slice_annotation_recursively(
-                            r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].loc[:, ["location", score_column]],
+                            r_wig_df_slice[r_wig_df_slice["location"]
+                                .between(start, end)].loc[:, ["location", score_column]],
                             score_column, args.min_len, args.max_len)
                         if ret_result is not None and ret_result:
                             list_out.extend(ret_result)
@@ -134,7 +133,6 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
     if not coverage_df.empty:
         slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos)
     return ret_pos
-
 
 
 def _merge_interval_lists(list_in, merge_range):
