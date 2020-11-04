@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--refseq_in", required=True, help="", type=str)
     parser.add_argument("--wigs_in", required=True, help="", type=str, nargs="+")
     parser.add_argument("--merge_range", default=20, help="", type=int)
-    parser.add_argument("--min_len", default=35, help="", type=int)
+    parser.add_argument("--min_len", default=50, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
@@ -119,9 +119,9 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
             cg_coverage = tmp_df[tmp_df["location"].isin(consecutive_loc)][score_col].tolist()
             mean_wid_prom = mean([peak_prominence, width_heights])
             mean_cg_ave_cov_prom = mean([peak_prominence, mean(cg_coverage)])
-            #len_factor = peaks_prop['widths'][0] / 100
+            len_factor = peaks_prop['widths'][0] / 100
             tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
-            tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom])]
+            tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom]) * len_factor]
             new_cg = consecutive_groups(tmp_df['location'].tolist())
             new_cg = [list(cg) for cg in new_cg]
             for i in new_cg:
