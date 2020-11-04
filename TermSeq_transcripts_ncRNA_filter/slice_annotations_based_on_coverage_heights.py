@@ -4,7 +4,7 @@ import os
 import multiprocessing as mp
 from Bio import SeqIO
 import sys
-from statistics import mean
+from statistics import mean, median
 import operator
 import itertools
 import numpy as np
@@ -34,7 +34,8 @@ def main():
     for item in args.wigs_in:
         for sub_item in glob.glob(item):
             wiggle_pathes.append(os.path.abspath(sub_item))
-    wiggles_parsed = [Wiggle(wiggle_path, chrom_sizes).get_wiggle(is_full=True) for wiggle_path in wiggle_pathes]
+    wiggles_parsed = [Wiggle(wiggle_path, chrom_sizes).get_wiggle(is_len_extended=True)
+                      for wiggle_path in wiggle_pathes]
     wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, 4).wiggle_matrix_df
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
     r_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_reverse" in i]
@@ -102,10 +103,9 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
     peaks, peaks_prop = find_peaks(cov_lst, height=(max_score, max_score), width=(min_len, max_len), prominence=0)
     if len(cov_lst) < min_len or peaks.size == 0:
         return ret_pos
-
-    #prominences_factor = peaks_prop['peak_heights'][0] / peaks_prop['prominences'][0]
+    width_heights = peaks_prop['width_heights'][0]
+    peak_prominence = peaks_prop['prominences'][0]
     remove_limit = peaks_prop['width_heights'][0]
-
     max_score_loc = coverage_df.iloc[peaks[0]]['location']
     tmp_df = coverage_df[coverage_df[score_col] >= remove_limit]
     if tmp_df.shape[0] == coverage_df.shape[0]:
@@ -118,14 +118,11 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
             continue
         if max_score_loc in consecutive_loc:
             cg_coverage = tmp_df[tmp_df["location"].isin(consecutive_loc)][score_col].tolist()
-            cg_ave_cov = mean(cg_coverage)
-            ave_cov_factor = peaks_prop['width_heights'][0] / cg_ave_cov
-            if ave_cov_factor >= 0.6:
-                tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
-                tmp_df = tmp_df[tmp_df[score_col] >= cg_ave_cov]
-                x = [tmp_df["location"].min(), tmp_df["location"].max()]
-            else:
-                x = [min(consecutive_loc), max(consecutive_loc)]
+            mean_wid_prom = mean([peak_prominence, width_heights])
+            mean_cg_ave_cov_prom = mean([peak_prominence, mean(cg_coverage)])
+            tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
+            tmp_df = tmp_df[tmp_df[score_col] >= mean([mean_wid_prom, mean_cg_ave_cov_prom])]
+            x = [tmp_df["location"].min(), tmp_df["location"].max()]
             if min_len <= x[-1] - x[0] + 1 <= max_len:
                 ret_pos.append(x)
             else:
