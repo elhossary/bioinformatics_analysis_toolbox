@@ -119,14 +119,25 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
             cg_coverage = tmp_df[tmp_df["location"].isin(consecutive_loc)][score_col].tolist()
             mean_wid_prom = mean([peak_prominence, width_heights])
             mean_cg_ave_cov_prom = mean([peak_prominence, mean(cg_coverage)])
+            #len_factor = peaks_prop['widths'][0] / 100
             tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
-            tmp_df = tmp_df[tmp_df[score_col] >= mean([mean_wid_prom, mean_cg_ave_cov_prom])]
+            tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom])]
+            new_cg = consecutive_groups(tmp_df['location'].tolist())
+            new_cg = [list(cg) for cg in new_cg]
+            for i in new_cg:
+                if min_len <= max(i) - min(i) + 1 <= max_len:
+                    ret_pos.append([min(i), max(i)])
+            """
+            print(new_cg)
+            new_cg = [i for i in new_cg if min_len <= max(i) - min(i) + 1 <= max_len]
+            print(len(new_cg))
             x = [tmp_df["location"].min(), tmp_df["location"].max()]
             if min_len <= x[-1] - x[0] + 1 <= max_len:
                 ret_pos.append(x)
             else:
                 if x[-1] - x[0] + 1 > max_len:
                     print("warning too long")
+            """
             single_sites.extend(consecutive_loc)
             break
     coverage_df = coverage_df[~coverage_df["location"].isin(single_sites)].copy()
