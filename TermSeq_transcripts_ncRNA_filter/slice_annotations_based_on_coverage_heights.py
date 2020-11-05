@@ -73,7 +73,7 @@ def main():
                 else:
                     continue
             except Exception as e:
-                print(e)
+                print(f"Wardning: {e}")
                 continue
             slices_counter = 0
             if list_out:
@@ -123,7 +123,6 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
             new_cg = consecutive_groups(tmp_df['location'].tolist())
             new_cg = [list(ncg) for ncg in new_cg]
             for ncg in new_cg:
-                print(ncg)
                 if min_len <= max(ncg) - min(ncg) + 1 <= max_len:
                     ret_pos.append([min(ncg), max(ncg)])
             """
