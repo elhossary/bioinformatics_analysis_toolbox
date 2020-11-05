@@ -37,7 +37,7 @@ parsed_wiggles = []
 chrom_sizes = get_chrom_sizes([os.path.abspath(args.fasta_in)])
 for item in args.wiggle_files:
     for sub_item in glob.glob(item):
-        parsed_wiggles.append(Wiggle(sub_item, chrom_sizes).get_wiggle())
+        parsed_wiggles.append(Wiggle(sub_item, chrom_sizes).get_wiggle(is_len_extended=True))
 wig_matrix = WiggleMatrix(parsed_wiggles, chrom_sizes, processes=args.processes)
 
 f_wiggles_matrix, r_wiggles_matrix = wig_matrix.get_matrix_by_orientation()

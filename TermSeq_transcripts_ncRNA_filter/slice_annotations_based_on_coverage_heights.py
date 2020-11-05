@@ -190,4 +190,5 @@ def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
 
 main()
+print("\n")
 exit(0)
