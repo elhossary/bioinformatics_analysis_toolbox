@@ -10,6 +10,7 @@ from scipy.signal import find_peaks
 import glob
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
+from multiprocessing import pool, process
 
 
 def main():
@@ -20,6 +21,7 @@ def main():
     parser.add_argument("--merge_range", default=20, help="", type=int)
     parser.add_argument("--min_len", default=50, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
+    parser.add_argument("--threads", default=2, help="", type=int)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
@@ -52,24 +54,28 @@ def main():
             start = gff_df.at[idx, "start"]
             end = gff_df.at[idx, "end"]
             strand = gff_df.at[idx, "strand"]
+
+            pool = mp.Pool(processes=args.threads)
+            processes = []
             list_out = []
             try:
                 if strand == "+":
                     for score_column in f_scores_columns:
-                        ret_result = slice_annotation_recursively(
+                        processes.append(pool.apply_async(slice_annotation_recursively, (
                             f_wig_df_slice[f_wig_df_slice["location"]
                                 .between(start, end)].loc[:, ["location", score_column]],
-                            score_column, args.min_len, args.max_len)
-                        if ret_result is not None and ret_result:
-                            list_out.extend(ret_result)
+                            score_column, args.min_len, args.max_len,)))
                 elif strand == "-":
                     for score_column in r_scores_columns:
-                        ret_result = slice_annotation_recursively(
-                            r_wig_df_slice[r_wig_df_slice["location"]
-                                .between(start, end)].loc[:, ["location", score_column]],
-                            score_column, args.min_len, args.max_len)
-                        if ret_result is not None and ret_result:
-                            list_out.extend(ret_result)
+                        processes.append(pool.apply_async(
+                            slice_annotation_recursively,
+                            (r_wig_df_slice[r_wig_df_slice["location"]
+                             .between(start, end)].loc[:, ["location", score_column]],
+                             score_column, args.min_len, args.max_len,)))
+                    process_results = [p.get() for p in processes]
+                    for res in process_results:
+                        if res is not None and res:
+                            list_out.extend(res)
                 else:
                     continue
             except Exception as e:
