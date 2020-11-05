@@ -76,8 +76,7 @@ def main():
                 print(e)
                 continue
             slices_counter = 0
-            if list_out is not None:
-                list_out = sorted(list_out)
+            if list_out:
                 list_out, _ = _merge_interval_lists(list_out, args.merge_range)
                 list_out.extend(_)
                 for i in list_out:
@@ -104,9 +103,8 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
         return ret_pos
     width_heights = peaks_prop['width_heights'][0]
     peak_prominence = peaks_prop['prominences'][0]
-    remove_limit = peaks_prop['width_heights'][0]
-    max_score_loc = coverage_df.iloc[peaks[0]]['location']
-    tmp_df = coverage_df[coverage_df[score_col] >= remove_limit]
+    max_score_loc = int(coverage_df.iloc[peaks[0]]['location'])
+    tmp_df = coverage_df[coverage_df[score_col] >= width_heights]
     if tmp_df.shape[0] == coverage_df.shape[0]:
         return ret_pos
     single_sites = []
@@ -123,10 +121,11 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
             tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
             tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom]) * len_factor]
             new_cg = consecutive_groups(tmp_df['location'].tolist())
-            new_cg = [list(cg) for cg in new_cg]
-            for i in new_cg:
-                if min_len <= max(i) - min(i) + 1 <= max_len:
-                    ret_pos.append([min(i), max(i)])
+            new_cg = [list(ncg) for ncg in new_cg]
+            for ncg in new_cg:
+                print(ncg)
+                if min_len <= max(ncg) - min(ncg) + 1 <= max_len:
+                    ret_pos.append([min(ncg), max(ncg)])
             """
             print(new_cg)
             new_cg = [i for i in new_cg if min_len <= max(i) - min(i) + 1 <= max_len]
@@ -147,6 +146,7 @@ def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_p
 
 
 def _merge_interval_lists(list_in, merge_range):
+    list_in = sorted(list_in)
     merge_range += 2
     list_out = []
     overlap_indices = []
