@@ -92,8 +92,6 @@ def main():
                         , ignore_index=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
-def slicer():
-
 
 def create_wiggle_obj(fpath, chrom_sizes):
     return Wiggle(fpath, chrom_sizes).get_wiggle(is_len_extended=True)
@@ -179,18 +177,6 @@ def get_chrom_sizes(fasta_pathes):
                              "fasta": os.path.basename(fasta_path)})
     return ret_list
 
-
-def build_wiggle_matrix(pathes, chrom_sizes):
-
-    pool = mp.Pool(processes=4)
-    processes = []
-    for wiggle_path in pathes:
-        processes.append(pool.apply_async(
-            Wiggle(os.path.abspath(wiggle_path), chrom_sizes).get_wiggle(),
-            (os.path.abspath(wiggle_path), chrom_sizes, )))
-    wigs_parsed = [p.get() for p in processes]
-    mat = WiggleMatrix(wigs_parsed, chrom_sizes, 4).build_matrix()
-    return mat.f_wiggle_matrix_df, mat.r_wiggle_matrix_df
 
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
