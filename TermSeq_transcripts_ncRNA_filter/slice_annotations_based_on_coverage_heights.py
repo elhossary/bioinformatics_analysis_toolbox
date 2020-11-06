@@ -47,7 +47,6 @@ def main():
     for comb in combinations:
         print(f"Trimming for sequence ID {comb[0]}{comb[1]}")
         wigs_selection = f_wiggles if comb[1] == "+" else r_wiggles
-        wiggles_slices = [df[df["variableStep_chrom"] == comb[0]] for df in wigs_selection]
         anno_slice = gff_df[(gff_df["seqid"] == comb[0]) & (gff_df["strand"] == comb[1])]
         gff_len = max(anno_slice.index.tolist())
         slicer_pool = mp.Pool(processes=args.threads)
@@ -57,24 +56,25 @@ def main():
             sys.stdout.write("\r" + f"Progress: {round(idx / gff_len * 100, 1)}%")
             anno_counter += 1
             row = gff_df.loc[idx, :]
-            slicer_processes.append(slicer_pool.apply_async(slicer, (row, wiggles_slices, args, comb, anno_counter)))
+            slicer_processes.append(slicer_pool.apply_async(slicer, (row, wigs_selection, args, comb, anno_counter)))
             slicer_res = [p.wait() for p in slicer_processes]
             slices_gff_df.append(slicer_res, ignore_index=True)
 
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
 
-def slicer(row, wiggles_slices, args, comb, anno_counter):
+def slicer(row, wig_lst, args, comb, anno_counter):
     start = row["start"]
     end = row["end"]
     strand = row["strand"]
     list_out = []
-    for wig in wiggles_slices:
-        wig_pos_slice = wig[wig["location"].between(start, end)].loc[:, ["location", "score"]]
-        if wig_pos_slice.empty:
+    for wig in wig_lst:
+        wig_view = wig[(wig["variableStep_chrom"] == comb[0]) &
+                       (wig["location"].between(start, end))].loc[:, ["location", "score"]]
+        if wig_view.empty:
             continue
         try:
-            ret_result = slice_annotation_recursively(wig_pos_slice, args.min_len, args.max_len)
+            ret_result = slice_annotation_recursively(wig_view, args.min_len, args.max_len)
             if ret_result is not None and ret_result:
                 list_out.extend(ret_result)
             else:
