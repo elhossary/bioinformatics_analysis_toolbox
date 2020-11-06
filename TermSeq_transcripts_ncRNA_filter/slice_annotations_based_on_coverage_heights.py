@@ -58,20 +58,14 @@ def main():
             wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)] if strand == "+"\
                 else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)]
             col_selection = f_scores_columns if strand == "+" else r_scores_columns
-            slicing_pool = mp.Pool(processes=args.threads)
-            slicing_process = []
             for score_column in col_selection:
                 try:
-                    slicing_process.append(slicing_pool.apply_async(
-                        slice_annotation_recursively,
-                        args=(wig_selection.loc[:, ["location", score_column]],
-                              score_column, args.min_len, args.max_len)))
-                    proces_res = [p.get for p in slicing_process]
-                    for ret_result in proces_res:
-                        if ret_result is not None and ret_result:
-                            list_out.extend(ret_result)
-                        else:
-                            continue
+                    ret_result = slice_annotation_recursively(
+                        wig_selection.loc[:, ["location", score_column]], score_column, args.min_len, args.max_len)
+                    if ret_result is not None and ret_result:
+                        list_out.extend(ret_result)
+                    else:
+                        continue
                 except Exception as e:
                     print(f"Warning: {e}")
                     continue
