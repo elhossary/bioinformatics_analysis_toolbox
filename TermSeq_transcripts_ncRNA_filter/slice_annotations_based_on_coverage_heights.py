@@ -46,7 +46,6 @@ def main():
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
-
         for idx in gff_df[gff_df["seqid"] == seqid].index:
             sys.stdout.flush()
             sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
