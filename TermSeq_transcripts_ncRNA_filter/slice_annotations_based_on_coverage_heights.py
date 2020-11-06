@@ -34,7 +34,7 @@ def main():
     for item in args.wigs_in:
         for sub_item in glob.glob(item):
             processes.append(wig_pool.apply_async(create_wiggle_obj, args=(os.path.abspath(sub_item), chrom_sizes)))
-            print("\n")
+
     wiggles_parsed = [p.get() for p in processes]
     wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, args.threads).wiggle_matrix_df
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
@@ -55,11 +55,12 @@ def main():
             end = gff_df.at[idx, "end"]
             strand = gff_df.at[idx, "strand"]
             list_out = []
-            selection = f_wig_df_slice if strand == "+" else r_wig_df_slice
+            wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)] if strand == "+"\
+                else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)]
+            col_selection = f_scores_columns if strand == "+" else r_scores_columns
             try:
-                for score_column in f_scores_columns:
-                    ret_result = slice_annotation_recursively(selection[selection["location"]
-                                                              .between(start, end)].loc[:, ["location", score_column]],
+                for score_column in col_selection:
+                    ret_result = slice_annotation_recursively(wig_selection.loc[:, ["location", score_column]],
                                                               score_column, args.min_len, args.max_len)
                     if ret_result is not None and ret_result:
                         list_out.extend(ret_result)
