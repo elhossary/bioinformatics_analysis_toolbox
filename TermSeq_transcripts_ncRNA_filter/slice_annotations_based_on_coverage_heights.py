@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--merge_range", default=20, help="", type=int)
     parser.add_argument("--min_len", default=50, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
+    parser.add_argument("--threads", default=1, help="", type=int)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
@@ -33,7 +34,7 @@ def main():
             wiggle_pathes.append(os.path.abspath(sub_item))
     wiggles_parsed = [Wiggle(wiggle_path, chrom_sizes).get_wiggle(is_len_extended=True)
                       for wiggle_path in wiggle_pathes]
-    wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, 4).wiggle_matrix_df
+    wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, args.threads).wiggle_matrix_df
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
     r_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_reverse" in i]
     seqid_list = [i for i in seqid_list if i in wiggle_matrix["seqid"].unique().tolist()]
