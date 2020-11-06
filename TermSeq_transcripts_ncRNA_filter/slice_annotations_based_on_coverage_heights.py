@@ -55,8 +55,9 @@ def main():
             anno_counter += 1
             processes.append(pool.apply_async(row_processor, (gff_df.loc[idx, :], seqid, f_scores_columns,
                                                               r_scores_columns, f_wig_df_slice, r_wig_df_slice,
-                                                              args.min_len, args.max_len, args.merge_range, anno_counter)).get())
-    for proc_id, proc in enumerate(processes):
+                                                              args.min_len, args.max_len, args.merge_range, anno_counter)))
+    prpcessed = [p.get() for p in processes]
+    for proc_id, proc in enumerate(prpcessed):
         sys.stdout.flush()
         sys.stdout.write("\r" + f"Progress: {round(((proc_id + 1)  / (args.threads * f_scores_columns)) / len(processes) * 100, 2)}%")
         if proc is not None:
