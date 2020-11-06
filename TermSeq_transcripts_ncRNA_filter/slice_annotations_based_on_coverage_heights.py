@@ -50,47 +50,56 @@ def main():
         wiggles_slices = [df[df["variableStep_chrom"] == comb[0]] for df in wigs_selection]
         anno_slice = gff_df[(gff_df["seqid"] == comb[0]) & (gff_df["strand"] == comb[1])]
         gff_len = max(anno_slice.index.tolist())
+        slicer_pool = mp.Pool(processes=args.threads)
+        slicer_processes = []
         for idx in anno_slice.index:
             sys.stdout.flush()
             sys.stdout.write("\r" + f"Progress: {round(idx / gff_len * 100, 1)}%")
-            start = gff_df.at[idx, "start"]
-            end = gff_df.at[idx, "end"]
-            strand = gff_df.at[idx, "strand"]
-            list_out = []
-            for wig in wiggles_slices:
-                wig_pos_slice = wig[wig["location"].between(start, end)].loc[:, ["location", "score"]]
-                if wig_pos_slice.empty:
-                    continue
-                try:
-                    ret_result = slice_annotation_recursively(wig_pos_slice, args.min_len, args.max_len)
-                    if ret_result is not None and ret_result:
-                        list_out.extend(ret_result)
-                    else:
-                        continue
-                except Exception as e:
-                    print(f"Warning: {e}")
-                    continue
-            slices_counter = 0
-            if list_out:
-                list_out, _ = _merge_interval_lists(list_out, args.merge_range)
-                list_out.extend(_)
-                for i in list_out:
-                    slices_counter += 1
-                    anno_counter += 1
-                    original_atrr = parse_attributes(gff_df.at[idx, 'attributes'])
-                    attr = f"ID={comb[1]}_{strand}_{gff_df.at[idx, 'type']}_{anno_counter}" \
-                           f";Name={original_atrr['name']}_slice_{slices_counter}" \
-                           f";seq_len={i[1] - i[0] + 1}"
-                    slices_gff_df = slices_gff_df.append(
-                        {"seqid": comb[1],
-                         "source": "ANNO_SLAYER",
-                         "type": gff_df.at[idx, 'type'],
-                         "score": ".",
-                         "strand": strand,
-                         "phase": ".",
-                         "attributes": attr}
-                        , ignore_index=True)
+            anno_counter += 1
+            row = gff_df.loc[idx, :]
+            slicer_processes.append(slicer_pool.apply_async(slicer, (row, wiggles_slices, args, comb, anno_counter)))
+            slicer_res = [p.wait() for p in slicer_processes]
+            slices_gff_df.append(slicer_res, ignore_index=True)
+
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
+
+
+def slicer(row, wiggles_slices, args, comb, anno_counter):
+    start = row["start"]
+    end = row["end"]
+    strand = row["strand"]
+    list_out = []
+    for wig in wiggles_slices:
+        wig_pos_slice = wig[wig["location"].between(start, end)].loc[:, ["location", "score"]]
+        if wig_pos_slice.empty:
+            continue
+        try:
+            ret_result = slice_annotation_recursively(wig_pos_slice, args.min_len, args.max_len)
+            if ret_result is not None and ret_result:
+                list_out.extend(ret_result)
+            else:
+                continue
+        except Exception as e:
+            print(f"Warning: {e}")
+            continue
+    slices_counter = 0
+    if list_out:
+        list_out, _ = _merge_interval_lists(list_out, args.merge_range)
+        list_out.extend(_)
+        for i in list_out:
+            slices_counter += 1
+            original_atrr = parse_attributes(row['attributes'])
+            attr = f"ID={comb[1]}_{strand}_{row['type']}_{anno_counter}" \
+                   f";Name={original_atrr['name']}_slice_{slices_counter}" \
+                   f";seq_len={i[1] - i[0] + 1}"
+            return \
+                {"seqid": comb[1],
+                 "source": "ANNO_SLAYER",
+                 "type": row['type'],
+                 "score": ".",
+                 "strand": strand,
+                 "phase": ".",
+                 "attributes": attr}
 
 
 def create_wiggle_obj(fpath, chrom_sizes):
