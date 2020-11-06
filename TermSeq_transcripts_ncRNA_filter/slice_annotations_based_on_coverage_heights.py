@@ -10,7 +10,6 @@ from scipy.signal import find_peaks
 import glob
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
-from multiprocessing import pool, process
 
 
 def main():
@@ -21,7 +20,6 @@ def main():
     parser.add_argument("--merge_range", default=20, help="", type=int)
     parser.add_argument("--min_len", default=50, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
-    parser.add_argument("--threads", default=2, help="", type=int)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
@@ -33,10 +31,9 @@ def main():
     for item in args.wigs_in:
         for sub_item in glob.glob(item):
             wiggle_pathes.append(os.path.abspath(sub_item))
-
     wiggles_parsed = [Wiggle(wiggle_path, chrom_sizes).get_wiggle(is_len_extended=True)
                       for wiggle_path in wiggle_pathes]
-    wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, args.threads).wiggle_matrix_df
+    wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, 4).wiggle_matrix_df
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
     r_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_reverse" in i]
     seqid_list = [i for i in seqid_list if i in wiggle_matrix["seqid"].unique().tolist()]
@@ -45,68 +42,51 @@ def main():
     gff_df_len = gff_df.shape[0]
     slices_gff_df = pd.DataFrame(columns=col_names)
     anno_counter = 0
-    pool = mp.Pool(processes=args.threads)
-    processes = []
-    anno_counter = 0
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
+
         for idx in gff_df[gff_df["seqid"] == seqid].index:
-            anno_counter += 1
-            processes.append(pool.apply_async(row_processor, (gff_df.loc[idx, :], seqid, f_scores_columns,
-                                                              r_scores_columns, f_wig_df_slice, r_wig_df_slice,
-                                                              args.min_len, args.max_len, args.merge_range, anno_counter)))
-    prpcessed = [p.get() for p in processes]
-    for proc_id, proc in enumerate(prpcessed):
-        sys.stdout.flush()
-        sys.stdout.write("\r" + f"Progress: {round(((proc_id + 1)  / (args.threads * f_scores_columns)) / len(processes) * 100, 2)}%")
-        if proc is not None:
-            slices_gff_df = slices_gff_df.append(proc, ignore_index=True)
+            sys.stdout.flush()
+            sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
+            start = gff_df.at[idx, "start"]
+            end = gff_df.at[idx, "end"]
+            strand = gff_df.at[idx, "strand"]
+            list_out = []
+            selection = f_wig_df_slice if strand == "+" else r_wig_df_slice
+            try:
+                for score_column in f_scores_columns:
+                    ret_result = slice_annotation_recursively(selection[selection["location"]
+                                                              .between(start, end)].loc[:, ["location", score_column]],
+                                                              score_column, args.min_len, args.max_len)
+                    if ret_result is not None and ret_result:
+                        list_out.extend(ret_result)
+                    else:
+                        continue
+            except Exception as e:
+                print(f"Warning: {e}")
+                continue
+            slices_counter = 0
+            if list_out:
+                list_out, _ = _merge_interval_lists(list_out, args.merge_range)
+                list_out.extend(_)
+                for i in list_out:
+                    slices_counter += 1
+                    anno_counter += 1
+                    original_atrr = parse_attributes(gff_df.at[idx, 'attributes'])
+                    attr = f"ID={seqid}_{strand}_{gff_df.at[idx, 'type']}_{anno_counter}" \
+                           f";Name={original_atrr['name']}_slice_{slices_counter}" \
+                           f";seq_len={i[1] - i[0] + 1}"
+                    slices_gff_df = slices_gff_df.append(
+                        {"seqid": seqid,
+                         "source": "ANNO_SLAYER",
+                         "type": gff_df.at[idx, 'type'],
+                         "score": ".",
+                         "strand": strand,
+                         "phase": ".",
+                         "attributes": attr}
+                        , ignore_index=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
-
-
-def row_processor(row, seqid, f_scores_columns, r_scores_columns, f_wig_df_slice, r_wig_df_slice,
-                  min_len, max_len, merge_range, anno_counter):
-    start = row["start"]
-    end = row["end"]
-    strand = row["strand"]
-    list_out = []
-    try:
-        ret_result = None
-        if strand == "+":
-            for score_column in f_scores_columns:
-                ret_result = slice_annotation_recursively(f_wig_df_slice[f_wig_df_slice["location"]
-                                                          .between(start, end)]
-                                                          .loc[:, ["location", score_column]],
-                                                          score_column, min_len, max_len)
-        elif strand == "-":
-            for score_column in r_scores_columns:
-                ret_result = slice_annotation_recursively(r_wig_df_slice[r_wig_df_slice["location"]
-                                                          .between(start, end)]
-                                                          .loc[:, ["location", score_column]],
-                                                          score_column, min_len, max_len)
-        else:
-            ret_result = None
-        if ret_result is not None and ret_result:
-            list_out.extend(ret_result)
-        else:
-            return None
-    except Exception as e:
-        print(f"Warning: {e}")
-        return None
-    slices_counter = 0
-    if list_out:
-        list_out, _ = _merge_interval_lists(list_out, merge_range)
-        list_out.extend(_)
-        for i in list_out:
-            slices_counter += 1
-            original_atrr = parse_attributes(row['attributes'])
-            attr = f"ID={seqid}_{strand}_{row['type']}_{anno_counter}" \
-                   f";Name={original_atrr['name']}_slice_{slices_counter}" \
-                   f";seq_len={i[1] - i[0] + 1}"
-            return {"seqid": seqid, "source": "ANNO_SLAYER", "type": row['type'],
-                    "start": i[0], "end": i[1], "score": ".", "strand": strand, "phase": ".",
-                    "attributes": attr}
 
 
 def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos=None):
