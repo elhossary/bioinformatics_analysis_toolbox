@@ -29,11 +29,13 @@ def main():
     chrom_sizes = get_chrom_sizes([os.path.abspath(args.refseq_in)])
     seqid_list = [x["seqid"] for x in chrom_sizes]
     wiggle_pathes = []
+    wig_pool = mp.Pool(processes=args.threads)
+    processes = []
     for item in args.wigs_in:
         for sub_item in glob.glob(item):
-            wiggle_pathes.append(os.path.abspath(sub_item))
-    wiggles_parsed = [Wiggle(wiggle_path, chrom_sizes).get_wiggle(is_len_extended=True)
-                      for wiggle_path in wiggle_pathes]
+            processes.append(wig_pool.apply_async(create_wiggle_obj, args=(os.path.abspath(sub_item), chrom_sizes)))
+            print("\n")
+    wiggles_parsed = [p.get() for p in processes]
     wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, args.threads).wiggle_matrix_df
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
     r_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_reverse" in i]
@@ -88,6 +90,8 @@ def main():
                         , ignore_index=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
+def create_wiggle_obj(fpath, chrom_sizes):
+    return Wiggle(fpath, chrom_sizes).get_wiggle(is_len_extended=True)
 
 def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos=None):
     if ret_pos is None:
