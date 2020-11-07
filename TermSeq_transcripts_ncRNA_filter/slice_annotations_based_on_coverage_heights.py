@@ -165,6 +165,7 @@ def _merge_interval_lists(list_in, merge_range):
     overlaps_list_out = [list_out[i] for i in overlap_indices]
     return overlaps_list_out, [i for i in list_out if i not in overlaps_list_out]
 
+
 def get_chrom_sizes(fasta_pathes):
     ret_list = []
     for fasta_path in fasta_pathes:
@@ -175,18 +176,6 @@ def get_chrom_sizes(fasta_pathes):
                              "fasta": os.path.basename(fasta_path)})
     return ret_list
 
-
-def build_wiggle_matrix(pathes, chrom_sizes):
-
-    pool = mp.Pool(processes=4)
-    processes = []
-    for wiggle_path in pathes:
-        processes.append(pool.apply_async(
-            Wiggle(os.path.abspath(wiggle_path), chrom_sizes).get_wiggle(),
-            (os.path.abspath(wiggle_path), chrom_sizes, )))
-    wigs_parsed = [p.get() for p in processes]
-    mat = WiggleMatrix(wigs_parsed, chrom_sizes, 4).build_matrix()
-    return mat.f_wiggle_matrix_df, mat.r_wiggle_matrix_df
 
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
