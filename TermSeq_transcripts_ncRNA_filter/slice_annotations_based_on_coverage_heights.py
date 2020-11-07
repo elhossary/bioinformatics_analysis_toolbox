@@ -35,6 +35,7 @@ def main():
             processes.append(wig_pool.apply_async(create_wiggle_obj, args=(os.path.abspath(sub_item), chrom_sizes)))
     wiggles_parsed = [p.get() for p in processes]
     wiggle_matrix = WiggleMatrix(wiggles_parsed, chrom_sizes, args.threads).wiggle_matrix_df
+    wig_pool.close()
     f_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_forward" in i]
     r_scores_columns = [i for i in wiggle_matrix.columns.tolist() if "_reverse" in i]
     seqid_list = [i for i in seqid_list if i in wiggle_matrix["seqid"].unique().tolist()]

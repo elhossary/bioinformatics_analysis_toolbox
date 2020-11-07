@@ -1,6 +1,7 @@
 import pandas as pd
 import os
-import multiprocessing as mp
+from functools import reduce
+import numpy as np
 
 
 class WiggleMatrix:
@@ -8,38 +9,58 @@ class WiggleMatrix:
         self.parsed_wiggles = parsed_wiggles
         self.processes = processes
         self.chrom_sizes = chrom_sizes
-        backbone = []
-        for chrom in self.chrom_sizes:
-            backbone += [[chrom["seqid"], loc] for loc in range(1, chrom["size"] + 1, 1)]
-        self.wiggle_matrix_df = pd.DataFrame(backbone, columns=["seqid", "location"])
-        self.build_matrix()
+        basic_columns = {"seqid": str, "location": int}
+        self.wiggle_matrix_df = pd.DataFrame(columns=basic_columns)
         self.f_wiggle_matrix_df = None
         self.r_wiggle_matrix_df = None
+        self.build_matrix()
 
     def build_matrix(self):
-        pool = mp.Pool(processes=self.processes)
-        processes = []
         print("Building the matrix from the parsed files")
-        for parsed_wiggle in self.parsed_wiggles:
-            processes.append(pool.apply_async(self._merge_single_wiggle_to_matrix, (parsed_wiggle,)))
-        columns_series = [p.get() for p in processes]
-        for column in columns_series:
-            self.wiggle_matrix_df[column.name] = column
+        self.prep_wiggles()
+        self.prep_matrix_df()
+        all_dfs = [self.wiggle_matrix_df]
+        all_dfs.extend(self.parsed_wiggles)
+        self.wiggle_matrix_df = reduce(lambda x, y: pd.merge(x, y, on=['seqid', 'location'], how='left'), all_dfs)
+        del self.parsed_wiggles
+        del all_dfs
+        for col in self.wiggle_matrix_df.columns:
+            if col not in ["seqid", "location"]:
+                self.wiggle_matrix_df[col] = self.wiggle_matrix_df[col].fillna(0.0)
+                self.wiggle_matrix_df[col] = pd.to_numeric(self.wiggle_matrix_df[col], downcast='float')
+        self.wiggle_matrix_df.reset_index(drop=True)
+        print("Wiggles matrix built")
         self.get_matrix_by_orientation()
 
-    def _merge_single_wiggle_to_matrix(self, wig):
-        condition_name = wig.at[0, "track_name"]
-        self.wiggle_matrix_df = pd.merge(how='outer',
-                                         left=self.wiggle_matrix_df,
-                                         right=wig[["variableStep_chrom", "location", "score"]],
-                                         left_on=['seqid', 'location'],
-                                         right_on=['variableStep_chrom', 'location']).fillna(0.0)
-        self.wiggle_matrix_df.rename(columns={"score": condition_name}, inplace=True)
-        for column in self.wiggle_matrix_df.columns.tolist():
-            if "variableStep_chrom" in column:
-                self.wiggle_matrix_df.drop(column, axis=1, inplace=True)
-        print(f"==> Merged condition {condition_name} to matrix")
-        return self.wiggle_matrix_df[condition_name]
+    def prep_wiggles(self):
+        fasta_seqids = [chrom["seqid"] for chrom in self.chrom_sizes]
+        for idx, wig in enumerate(self.parsed_wiggles):
+            condition_name = wig.at[0, "track_name"]
+            self.parsed_wiggles[idx].drop(["track_type", "track_name", "variableStep_span"], inplace=True, axis=1)
+            self.parsed_wiggles[idx].rename(
+                {"score": condition_name, "variableStep_chrom": "seqid"}, inplace=True, axis=1)
+            self.parsed_wiggles[idx] = self.parsed_wiggles[idx][self.parsed_wiggles[idx]["seqid"].isin(fasta_seqids)]
+
+    def get_wiggle_seqids(self):
+        seqids = []
+        for wig in self.parsed_wiggles:
+            seqids.extend(wig["seqid"].unique().tolist())
+        return list(set(seqids))
+
+    def prep_matrix_df(self):
+        for seqid in self.get_wiggle_seqids():
+            if seqid not in self.wiggle_matrix_df["seqid"]:
+                chrom_size = 0
+                for chrom in self.chrom_sizes:
+                    if seqid == chrom["seqid"]:
+                        chrom_size = chrom["size"]
+                        break
+                if chrom_size > 0:
+                    tmp_lst = []
+                    for i in range(1, chrom_size + 1, 1):
+                        tmp_lst.append({"seqid": seqid, "location": i})
+                    self.wiggle_matrix_df = self.wiggle_matrix_df.append(tmp_lst, ignore_index=True)
+                    del tmp_lst
 
     def get_matrix_by_orientation(self):
         f_column_list = ["seqid", "location"]
