@@ -93,7 +93,7 @@ def main():
         slices_gff_df = slices_gff_df.append(
             generate_annotations_from_positions(
                 r_list_out, seqid, "-", args.rename_type, args.merge_range))
-
+    slices_gff_df.sort_values(["seqid", "start", "end"], inplace=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
 
