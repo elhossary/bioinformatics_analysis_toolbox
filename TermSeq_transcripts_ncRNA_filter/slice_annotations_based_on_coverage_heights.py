@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--min_len", default=50, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
     parser.add_argument("--threads", default=1, help="", type=int)
+    parser.add_argument("--rename_type", required=True, help="", type=str)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
@@ -43,54 +44,82 @@ def main():
     wiggle_matrix[r_scores_columns] = wiggle_matrix[r_scores_columns].abs()
     gff_df_len = gff_df.shape[0]
     slices_gff_df = pd.DataFrame(columns=col_names)
-    anno_counter = 0
+
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
+        slicer_pool = mp.Pool()
+        f_slicer_processes = []
+        r_slicer_processes = []
         for idx in gff_df[gff_df["seqid"] == seqid].index:
             sys.stdout.flush()
             sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
             start = gff_df.at[idx, "start"]
             end = gff_df.at[idx, "end"]
             strand = gff_df.at[idx, "strand"]
-            list_out = []
             wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)] if strand == "+"\
                 else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)]
             col_selection = f_scores_columns if strand == "+" else r_scores_columns
             for score_column in col_selection:
-                try:
-                    ret_result = slice_annotation_recursively(
-                        wig_selection.loc[:, ["location", score_column]], score_column, args.min_len, args.max_len)
-                    if ret_result is not None and ret_result:
-                        list_out.extend(ret_result)
-                    else:
-                        continue
-                except Exception as e:
-                    print(f"Warning: {e}")
-                    continue
-            slices_counter = 0
-            if list_out:
-                list_out, _ = _merge_interval_lists(list_out, args.merge_range)
-                list_out.extend(_)
-                for i in list_out:
-                    slices_counter += 1
-                    anno_counter += 1
-                    original_atrr = parse_attributes(gff_df.at[idx, 'attributes'])
-                    attr = f"ID={seqid}_{strand}_{gff_df.at[idx, 'type']}_{anno_counter}" \
-                           f";Name={original_atrr['name']}_slice_{slices_counter}" \
-                           f";seq_len={i[1] - i[0] + 1}"
-                    slices_gff_df = slices_gff_df.append(
-                        {"seqid": seqid,
-                         "source": "ANNO_SLAYER",
-                         "type": gff_df.at[idx, 'type'],
-                         "start": i[0],
-                         "end": i[1],
-                         "score": ".",
-                         "strand": strand,
-                         "phase": ".",
-                         "attributes": attr}
-                        , ignore_index=True)
+                if strand == "+":
+                    f_slicer_processes.append(
+                        slicer_pool.apply_async(
+                            slice_annotation_recursively,
+                            (wig_selection.loc[:, ["location", score_column]],
+                             score_column, args.min_len, args.max_len)))
+                if strand == "-":
+                    r_slicer_processes.append(
+                        slicer_pool.apply_async(
+                            slice_annotation_recursively,
+                            (wig_selection.loc[:, ["location", score_column]],
+                             score_column, args.min_len, args.max_len)))
+        f_list_out = []
+        r_list_out = []
+        for fp in f_slicer_processes:
+            f_ret_result = fp.get()
+            if f_ret_result is not None and f_ret_result:
+                f_list_out.extend(f_ret_result)
+            else:
+                continue
+        for rp in r_slicer_processes:
+            r_ret_result = rp.get()
+            if r_ret_result is not None and r_ret_result:
+                r_list_out.extend(r_ret_result)
+            else:
+                continue
+        slices_gff_df = slices_gff_df.append(
+            generate_annotations_from_positions(
+                f_list_out, seqid, "+", args.rename_type, args.merge_range))
+        slices_gff_df = slices_gff_df.append(
+            generate_annotations_from_positions(
+                r_list_out, seqid, "-", args.rename_type, args.merge_range))
+
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
+
+
+def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge_range):
+    strand_letter_func = lambda x: "F" if x == "+" else "R"
+    anno_counter = 0
+    anno_list = []
+    if list_out:
+        list_out, _ = _merge_interval_lists(list_out, merge_range)
+        list_out.extend(_)
+        for i in list_out:
+            anno_counter += 1
+            attr = f"ID={seqid}{strand_letter_func(strand)}_{anno_counter}" \
+                   f";Name={seqid}_{strand_letter_func(strand)}_{new_type}_{anno_counter}" \
+                   f";seq_len={i[1] - i[0] + 1}"
+            anno_list.append(
+                {"seqid": seqid,
+                 "source": "ANNO_SLAYER",
+                 "type": new_type,
+                 "start": i[0],
+                 "end": i[1],
+                 "score": ".",
+                 "strand": strand,
+                 "phase": ".",
+                 "attributes": attr})
+    return anno_list
 
 
 def create_wiggle_obj(fpath, chrom_sizes):
@@ -98,54 +127,47 @@ def create_wiggle_obj(fpath, chrom_sizes):
 
 
 def slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos=None):
-    if ret_pos is None:
-        ret_pos = []
-    max_score = coverage_df[score_col].max()
-    cov_lst = coverage_df[score_col].tolist()
-    peaks, peaks_prop = find_peaks(cov_lst, height=(max_score, max_score), width=(min_len, max_len), prominence=0)
-    if len(cov_lst) < min_len or peaks.size == 0:
+    try:
+        if ret_pos is None:
+            ret_pos = []
+        max_score = coverage_df[score_col].max()
+        cov_lst = coverage_df[score_col].tolist()
+        peaks, peaks_prop = find_peaks(cov_lst, height=(max_score, max_score), width=(min_len, max_len), prominence=0)
+        if len(cov_lst) < min_len or peaks.size == 0:
+            return ret_pos
+        width_heights = peaks_prop['width_heights'][0]
+        peak_prominence = peaks_prop['prominences'][0]
+        max_score_loc = int(coverage_df.iloc[peaks[0]]['location'])
+        tmp_df = coverage_df[coverage_df[score_col] >= width_heights]
+        if tmp_df.shape[0] == coverage_df.shape[0]:
+            return ret_pos
+        single_sites = []
+        for cg in consecutive_groups(tmp_df['location'].tolist()):
+            consecutive_loc = list(cg)
+            if len(consecutive_loc) == 1:
+                single_sites.extend(consecutive_loc)
+                continue
+            if max_score_loc in consecutive_loc:
+                cg_coverage = tmp_df[tmp_df["location"].isin(consecutive_loc)][score_col].tolist()
+                mean_wid_prom = mean([peak_prominence, width_heights])
+                mean_cg_ave_cov_prom = mean([peak_prominence, mean(cg_coverage)])
+                len_factor = peaks_prop['widths'][0] / 100
+                tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
+                tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom]) * len_factor]
+                new_cg = consecutive_groups(tmp_df['location'].tolist())
+                new_cg = [list(ncg) for ncg in new_cg]
+                for ncg in new_cg:
+                    if min_len <= max(ncg) - min(ncg) + 1 <= max_len:
+                        ret_pos.append([min(ncg), max(ncg)])
+                single_sites.extend(consecutive_loc)
+                break
+        coverage_df = coverage_df[~coverage_df["location"].isin(single_sites)].copy()
+        if not coverage_df.empty:
+            slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos)
         return ret_pos
-    width_heights = peaks_prop['width_heights'][0]
-    peak_prominence = peaks_prop['prominences'][0]
-    max_score_loc = int(coverage_df.iloc[peaks[0]]['location'])
-    tmp_df = coverage_df[coverage_df[score_col] >= width_heights]
-    if tmp_df.shape[0] == coverage_df.shape[0]:
+    except Exception as e:
+        print(f"Warning: {e}")
         return ret_pos
-    single_sites = []
-    for cg in consecutive_groups(tmp_df['location'].tolist()):
-        consecutive_loc = list(cg)
-        if len(consecutive_loc) == 1:
-            single_sites.extend(consecutive_loc)
-            continue
-        if max_score_loc in consecutive_loc:
-            cg_coverage = tmp_df[tmp_df["location"].isin(consecutive_loc)][score_col].tolist()
-            mean_wid_prom = mean([peak_prominence, width_heights])
-            mean_cg_ave_cov_prom = mean([peak_prominence, mean(cg_coverage)])
-            len_factor = peaks_prop['widths'][0] / 100
-            tmp_df = tmp_df[tmp_df["location"].isin(consecutive_loc)]
-            tmp_df = tmp_df[tmp_df[score_col] >= min([mean_wid_prom, mean_cg_ave_cov_prom]) * len_factor]
-            new_cg = consecutive_groups(tmp_df['location'].tolist())
-            new_cg = [list(ncg) for ncg in new_cg]
-            for ncg in new_cg:
-                if min_len <= max(ncg) - min(ncg) + 1 <= max_len:
-                    ret_pos.append([min(ncg), max(ncg)])
-            """
-            print(new_cg)
-            new_cg = [i for i in new_cg if min_len <= max(i) - min(i) + 1 <= max_len]
-            print(len(new_cg))
-            x = [tmp_df["location"].min(), tmp_df["location"].max()]
-            if min_len <= x[-1] - x[0] + 1 <= max_len:
-                ret_pos.append(x)
-            else:
-                if x[-1] - x[0] + 1 > max_len:
-                    print("warning too long")
-            """
-            single_sites.extend(consecutive_loc)
-            break
-    coverage_df = coverage_df[~coverage_df["location"].isin(single_sites)].copy()
-    if not coverage_df.empty:
-        slice_annotation_recursively(coverage_df, score_col, min_len, max_len, ret_pos)
-    return ret_pos
 
 
 def _merge_interval_lists(list_in, merge_range):
