@@ -83,6 +83,8 @@ def main():
                         {"seqid": seqid,
                          "source": "ANNO_SLAYER",
                          "type": gff_df.at[idx, 'type'],
+                         "start": i[0],
+                         "end": i[1],
                          "score": ".",
                          "strand": strand,
                          "phase": ".",
