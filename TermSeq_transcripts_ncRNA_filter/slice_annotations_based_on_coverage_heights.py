@@ -48,7 +48,7 @@ def main():
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
-        slicer_pool = mp.Pool()
+        slicer_pool = mp.Pool(processes=args.threads)
         f_slicer_processes = []
         r_slicer_processes = []
         for idx in gff_df[gff_df["seqid"] == seqid].index:
