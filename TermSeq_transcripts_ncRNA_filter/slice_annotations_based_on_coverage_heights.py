@@ -73,8 +73,9 @@ def row_process(row, f_wig_df_slice, r_wig_df_slice, f_scores_columns, r_scores_
     end = row["end"]
     strand = row["strand"]
     seqid = row["seqid"]
-    wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].copy() if strand == "+" \
-        else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].copy()
+    t = time.time()
+    wig_selection = f_wig_df_slice[f_wig_df_slice["location"].isin(range(start, end + 1))].copy() if strand == "+" \
+        else r_wig_df_slice[r_wig_df_slice["location"].isin(range(start, end + 1))].copy()
     col_selection = f_scores_columns if strand == "+" else r_scores_columns
     list_out = []
     results_collection = [
