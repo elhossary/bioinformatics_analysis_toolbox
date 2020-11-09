@@ -43,24 +43,26 @@ def main():
     seqid_list = [i for i in seqid_list if i in wiggle_matrix["seqid"].unique().tolist()]
     seqid_list = [i for i in seqid_list if i in wiggle_matrix["seqid"].unique().tolist()]
     wiggle_matrix[r_scores_columns] = wiggle_matrix[r_scores_columns].abs()
-    gff_df_len = gff_df.shape[0]
     slices_gff_df = pd.DataFrame(columns=col_names)
     slicer_pool = mp.Pool(processes=args.threads)
     slicer_processes = []
+    print("Spawning processes")
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
         for idx in gff_df[gff_df["seqid"] == seqid].index:
-            sys.stdout.flush()
-            sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
-            row = gff_df.loc[idx]
             slicer_processes.append(
                 slicer_pool.apply_async(row_process,
-                                        (row,
+                                        (gff_df.loc[idx],
                                          f_wig_df_slice, r_wig_df_slice,
                                          f_scores_columns, r_scores_columns,
                                          args)))
+    proc_len = len(slicer_processes)
+    counter = 0
     for p in slicer_processes:
+        counter += 1
+        sys.stdout.flush()
+        sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
         slices_gff_df = slices_gff_df.append(p.get())
     slices_gff_df.sort_values(["seqid", "start", "end"], inplace=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
