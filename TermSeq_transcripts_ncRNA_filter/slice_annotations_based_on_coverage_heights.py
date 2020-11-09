@@ -57,8 +57,8 @@ def main():
             start = gff_df.at[idx, "start"]
             end = gff_df.at[idx, "end"]
             strand = gff_df.at[idx, "strand"]
-            wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)] if strand == "+"\
-                else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)]
+            wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].copy() if strand == "+"\
+                else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].copy()
             col_selection = f_scores_columns if strand == "+" else r_scores_columns
             for score_column in col_selection:
                 if strand == "+":
