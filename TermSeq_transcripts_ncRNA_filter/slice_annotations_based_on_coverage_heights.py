@@ -10,6 +10,7 @@ from scipy.signal import find_peaks
 import glob
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
+import time
 
 
 def main():
@@ -44,57 +45,37 @@ def main():
     wiggle_matrix[r_scores_columns] = wiggle_matrix[r_scores_columns].abs()
     gff_df_len = gff_df.shape[0]
     slices_gff_df = pd.DataFrame(columns=col_names)
-
+    slicer_pool = mp.Pool(processes=args.threads)
+    slicer_processes = []
     for seqid in seqid_list:
         f_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, f_scores_columns + ["location"]]
         r_wig_df_slice = wiggle_matrix[wiggle_matrix["seqid"] == seqid].loc[:, r_scores_columns + ["location"]]
-        slicer_pool = mp.Pool(processes=args.threads)
-        f_slicer_processes = []
-        r_slicer_processes = []
         for idx in gff_df[gff_df["seqid"] == seqid].index:
             sys.stdout.flush()
             sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
             start = gff_df.at[idx, "start"]
             end = gff_df.at[idx, "end"]
             strand = gff_df.at[idx, "strand"]
+            t = time.time()
             wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].copy() if strand == "+"\
                 else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].copy()
             col_selection = f_scores_columns if strand == "+" else r_scores_columns
-            for score_column in col_selection:
-                if strand == "+":
-                    f_slicer_processes.append(
-                        slicer_pool.apply_async(
-                            slice_annotation_recursively,
-                            (wig_selection.loc[:, ["location", score_column]],
-                             score_column, args.min_len, args.max_len)))
-                if strand == "-":
-                    r_slicer_processes.append(
-                        slicer_pool.apply_async(
-                            slice_annotation_recursively,
-                            (wig_selection.loc[:, ["location", score_column]],
-                             score_column, args.min_len, args.max_len)))
-        f_list_out = []
-        r_list_out = []
-        for fp in f_slicer_processes:
-            f_ret_result = fp.get()
-            if f_ret_result is not None and f_ret_result:
-                f_list_out.extend(f_ret_result)
-            else:
-                continue
-        for rp in r_slicer_processes:
-            r_ret_result = rp.get()
-            if r_ret_result is not None and r_ret_result:
-                r_list_out.extend(r_ret_result)
-            else:
-                continue
-        slices_gff_df = slices_gff_df.append(
-            generate_annotations_from_positions(
-                f_list_out, seqid, "+", args.rename_type, args.merge_range))
-        slices_gff_df = slices_gff_df.append(
-            generate_annotations_from_positions(
-                r_list_out, seqid, "-", args.rename_type, args.merge_range))
+            slicer_processes.append(
+                slicer_pool.apply_async(row_process, (wig_selection, col_selection, args, seqid, strand)))
+    for p in slicer_processes:
+        slices_gff_df = slices_gff_df.append(p.get())
     slices_gff_df.sort_values(["seqid", "start", "end"], inplace=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
+
+
+def row_process(wig_selection, col_selection, args, seqid, strand):
+    list_out = []
+    results_collection = [
+        slice_annotation_recursively(wig_selection.loc[:, ["location", x]], x, args.min_len, args.max_len) for x in
+        col_selection]
+    for x in results_collection:
+        list_out.extend(x)
+    return generate_annotations_from_positions(list_out, seqid, strand, args.rename_type, args.merge_range)
 
 
 def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge_range):
