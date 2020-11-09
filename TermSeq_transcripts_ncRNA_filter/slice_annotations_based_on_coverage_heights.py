@@ -53,22 +53,27 @@ def main():
         for idx in gff_df[gff_df["seqid"] == seqid].index:
             sys.stdout.flush()
             sys.stdout.write("\r" + f"Sequence ID {seqid} progress: {round(idx / gff_df_len * 100, 1)}%")
-            start = gff_df.at[idx, "start"]
-            end = gff_df.at[idx, "end"]
-            strand = gff_df.at[idx, "strand"]
-            t = time.time()
-            wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].copy() if strand == "+"\
-                else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].copy()
-            col_selection = f_scores_columns if strand == "+" else r_scores_columns
+            row = gff_df.loc[idx]
             slicer_processes.append(
-                slicer_pool.apply_async(row_process, (wig_selection, col_selection, args, seqid, strand)))
+                slicer_pool.apply_async(row_process,
+                                        (row,
+                                         f_wig_df_slice, r_wig_df_slice,
+                                         f_scores_columns, r_scores_columns,
+                                         args)))
     for p in slicer_processes:
         slices_gff_df = slices_gff_df.append(p.get())
     slices_gff_df.sort_values(["seqid", "start", "end"], inplace=True)
     slices_gff_df.to_csv(os.path.abspath(f"{args.gff_out}"), sep="\t", header=False, index=False)
 
 
-def row_process(wig_selection, col_selection, args, seqid, strand):
+def row_process(row, f_wig_df_slice, r_wig_df_slice, f_scores_columns, r_scores_columns, args):
+    start = row["start"]
+    end = row["end"]
+    strand = row["strand"]
+    seqid = row["seqid"]
+    wig_selection = f_wig_df_slice[f_wig_df_slice["location"].between(start, end)].copy() if strand == "+" \
+        else r_wig_df_slice[r_wig_df_slice["location"].between(start, end)].copy()
+    col_selection = f_scores_columns if strand == "+" else r_scores_columns
     list_out = []
     results_collection = [
         slice_annotation_recursively(wig_selection.loc[:, ["location", x]], x, args.min_len, args.max_len) for x in
