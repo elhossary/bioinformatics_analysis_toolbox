@@ -78,12 +78,32 @@ def row_process(row, f_wig_df_slice, r_wig_df_slice, f_scores_columns, r_scores_
         else r_wig_df_slice[r_wig_df_slice["location"].isin(range(start, end + 1))].copy()
     col_selection = f_scores_columns if strand == "+" else r_scores_columns
     list_out = []
-    results_collection = [
-        slice_annotation_recursively(wig_selection.loc[:, ["location", x]], x, args.min_len, args.max_len) for x in
-        col_selection]
+    raw_anno_len = args.min_len <= end - start + 1
+    if raw_anno_len <= args.max_len:
+        results_collection = [
+            slice_annotation_once(wig_selection.loc[:, ["location", x]], x, args.min_len)
+            for x in col_selection]
+    elif raw_anno_len > args.max_len:
+        results_collection = [
+            slice_annotation_recursively(wig_selection.loc[:, ["location", x]], x, args.min_len, args.max_len)
+            for x in col_selection]
+    else:
+        results_collection = []
     for x in results_collection:
         list_out.extend(x)
     return generate_annotations_from_positions(list_out, seqid, strand, args.rename_type, args.merge_range)
+
+
+def slice_annotation_once(coverage_df, score_col, min_len):
+    ret_list = []
+    max_score = coverage_df[score_col].max()
+    tmp_df = coverage_df[coverage_df[score_col] >= max_score * 0.10]
+    max_score_locs = tmp_df[tmp_df[score_col] == max_score]["location"].tolist()
+    for cg in consecutive_groups(tmp_df['location'].tolist()):
+        consecutive_loc = list(cg)
+        if any(max_score_locs) in consecutive_loc and len(consecutive_loc) >= min_len:
+            ret_list.append([min(consecutive_loc), max(consecutive_loc)])
+    return ret_list
 
 
 def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge_range):
