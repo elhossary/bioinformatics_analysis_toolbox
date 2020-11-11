@@ -78,8 +78,8 @@ def row_process(row, f_wig_df_slice, r_wig_df_slice, f_scores_columns, r_scores_
         else r_wig_df_slice[r_wig_df_slice["location"].isin(range(start, end + 1))].copy()
     col_selection = f_scores_columns if strand == "+" else r_scores_columns
     list_out = []
-    raw_anno_len = args.min_len <= end - start + 1
-    if raw_anno_len <= args.max_len:
+    raw_anno_len = end - start + 1
+    if args.min_len <= raw_anno_len <= args.max_len:
         results_collection = [
             slice_annotation_once(wig_selection.loc[:, ["location", x]], x, args.min_len)
             for x in col_selection]
