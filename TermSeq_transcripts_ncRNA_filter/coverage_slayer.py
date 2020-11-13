@@ -50,23 +50,35 @@ def main():
     print("Predicting peaks for forward")
     for arr in f_arrays:
         for seqid, stretches_locations in arr[1].items():
+            print(f"Predicting for {seqid}+")
             if not seqid in f_raw_pos.keys():
                 f_raw_pos[seqid] = []
             for loc in stretches_locations:
                 f_proc.append(pool.apply_async(predict_locs_arr_slice, args=(arr[0], seqid, loc[0], loc[1], args)))
+            proc_len = len(f_proc)
+            counter = 0
             for p in f_proc:
+                counter += 1
+                sys.stdout.flush()
+                sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
                 f_raw_pos[seqid].extend(p.get())
 
     print("Predicting peaks for reverse")
     for arr in r_arrays:
         for seqid, stretches_locations in arr[1].items():
+            print(f"Predicting for {seqid}+")
             if not seqid in r_raw_pos.keys():
                 r_raw_pos[seqid] = []
             for loc in stretches_locations:
                 r_proc.append(pool.apply_async(predict_locs_arr_slice, args=(arr[0], seqid, loc[0], loc[1], args)))
-            for p in f_proc:
+            proc_len = len(r_proc)
+            counter = 0
+            for p in r_proc:
+                counter += 1
+                sys.stdout.flush()
+                sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
                 r_raw_pos[seqid].extend(p.get())
-
+    pool.close()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     peaks_gff_df = pd.DataFrame(columns=col_names)
     print("Generating annotations from merged overlapping positions for forward")
