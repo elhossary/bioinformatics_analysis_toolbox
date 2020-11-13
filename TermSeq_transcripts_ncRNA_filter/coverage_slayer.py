@@ -13,6 +13,7 @@ import multiprocessing as mp
 
 
 def main():
+    np.set_printoptions(suppress=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("--refseq_in", required=True, help="", type=str)
     parser.add_argument("--wigs_in", required=True, help="", type=str, nargs="+")
@@ -47,14 +48,14 @@ def main():
     pool = mp.Pool(processes=args.threads)
     f_proc = []
     r_proc = []
-    print("Predicting peaks for forward")
-    for arr in f_arrays:
-        for seqid, stretches_locations in arr[1].items():
-            print(f"Predicting for {seqid}+")
-            if not seqid in f_raw_pos.keys():
-                f_raw_pos[seqid] = []
-            for loc in stretches_locations:
-                f_proc.append(pool.apply_async(predict_locs_arr_slice, args=(arr[0], seqid, loc[0], loc[1], args)))
+    for seqid in seqid_list:
+        if not seqid in f_raw_pos.keys():
+            f_raw_pos[seqid] = []
+        print(f"Predicting peaks for {seqid}+")
+        for arr in f_arrays:
+            for loc in arr[1][seqid]:
+                f_proc.append(pool.apply_async(predict_locs_arr_slice,
+                                               args=(arr[0][seqid], loc[0], loc[1], args)))
             proc_len = len(f_proc)
             counter = 0
             for p in f_proc:
@@ -63,14 +64,14 @@ def main():
                 sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
                 f_raw_pos[seqid].extend(p.get())
 
-    print("Predicting peaks for reverse")
-    for arr in r_arrays:
-        for seqid, stretches_locations in arr[1].items():
-            print(f"Predicting for {seqid}+")
-            if not seqid in r_raw_pos.keys():
-                r_raw_pos[seqid] = []
-            for loc in stretches_locations:
-                r_proc.append(pool.apply_async(predict_locs_arr_slice, args=(arr[0], seqid, loc[0], loc[1], args)))
+    for seqid in seqid_list:
+        if not seqid in r_raw_pos.keys():
+            r_raw_pos[seqid] = []
+        print(f"Predicting peaks for {seqid}-")
+        for arr in r_arrays:
+            for loc in arr[1][seqid]:
+                r_proc.append(pool.apply_async(predict_locs_arr_slice,
+                                               args=(arr[0][seqid], loc[0], loc[1], args)))
             proc_len = len(r_proc)
             counter = 0
             for p in r_proc:
@@ -78,6 +79,7 @@ def main():
                 sys.stdout.flush()
                 sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
                 r_raw_pos[seqid].extend(p.get())
+
     pool.close()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     peaks_gff_df = pd.DataFrame(columns=col_names)
@@ -100,26 +102,25 @@ def main():
     peaks_gff_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
 
 
-def predict_locs_arr_slice(arr, seqid, start, end, args):
-    return generate_locs(
-        arr[np.logical_and(arr[:, 0] == seqid,
-                           np.logical_and(arr[:, 1] >= start, arr[:, 1] <= end))],
-        args)
+def predict_locs_arr_slice(arr, start, end, args):
+    arr_slice = arr[np.logical_and(arr[:, 0] >= start, arr[:, 0] <= end)].copy()
+    return generate_locs(arr_slice, args)
 
 
 def generate_locs(wig_arr_slice, args):
     dist = args.min_len * 2
     length_range = range(args.min_len, args.max_len + 1, 1)
     ret_locs = []
-    # Assuming that the incoming array have the raw coverage values at column 2,
-    # where the rising step height at 3, and falling step height at 4
-    if len(set(wig_arr_slice[:, 2].tolist())) > 1:
-        wig_peaks, wig_peaks_prop = find_peaks(wig_arr_slice[:, 2], prominence=0, distance=dist)
-        rising_peaks, rising_peaks_prop = find_peaks(wig_arr_slice[:, 3], prominence=0, distance=dist)
-        falling_peaks, falling_peaks_prop = find_peaks(wig_arr_slice[:, 4], prominence=0, distance=dist)
-        wig_locs = [wig_arr_slice[i, 1] for i in wig_peaks]
-        rising_locs = [wig_arr_slice[i, 1] for i in rising_peaks]
-        falling_locs = [wig_arr_slice[i, 1] for i in falling_peaks]
+    # Assuming that the incoming array have the raw coverage values at column 1,
+    # where the rising step height at 2, and falling step height at 3
+    # of course column 0 is for location
+    if len(set(wig_arr_slice[:, 1].tolist())) > 1:
+        wig_peaks, wig_peaks_prop = find_peaks(wig_arr_slice[:, 1], prominence=0, distance=dist)
+        rising_peaks, rising_peaks_prop = find_peaks(wig_arr_slice[:, 2], prominence=0, distance=dist)
+        falling_peaks, falling_peaks_prop = find_peaks(wig_arr_slice[:, 3], prominence=0, distance=dist)
+        wig_locs = [wig_arr_slice[i, 0] for i in wig_peaks]
+        rising_locs = [wig_arr_slice[i, 0] for i in rising_peaks]
+        falling_locs = [wig_arr_slice[i, 0] for i in falling_peaks]
         for l in wig_locs:
             uppers = [i for i in falling_locs if l <= i]
             lowers = [i for i in rising_locs if l >= i]
@@ -129,8 +130,8 @@ def generate_locs(wig_arr_slice, args):
             upper_loc = min(uppers)
             if upper_loc - lower_loc + 1 in length_range:
                 ret_locs.append([lower_loc, upper_loc])
-    elif len(set(wig_arr_slice[:, 2].tolist())) == 1:
-        locs = wig_arr_slice[:, 1].tolist()
+    elif len(set(wig_arr_slice[:, 1].tolist())) == 1:
+        locs = wig_arr_slice[:, 0].tolist()
         lower_loc = min(locs)
         upper_loc = max(locs)
         if upper_loc - lower_loc + 1 in length_range:
@@ -165,14 +166,18 @@ def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge
 
 
 def convert_wiggle_obj_to_arr(wig_obj, args):
+    arr_dict = {}
     wig_cols = ["variableStep_chrom", "location", "score"]
     wig_df = wig_obj.get_wiggle().loc[:, wig_cols]
     wig_df["score"] = wig_df["score"].abs()
-    return [reduce(lambda x, y: pd.merge(x, y, on=["variableStep_chrom", "location"], how='left'),
-                  [wig_df.loc[:, wig_cols],
-                   wig_obj.to_step_height(3, "start_end").loc[:, wig_cols],
-                   wig_obj.to_step_height(3, "end_start").loc[:, wig_cols]]).to_numpy(),
-            generate_locations(wig_df, args)]
+    merged_df = reduce(lambda x, y: pd.merge(x, y, on=["variableStep_chrom", "location"], how='left'),
+                       [wig_df.loc[:, wig_cols],
+                        wig_obj.to_step_height(3, "start_end").loc[:, wig_cols],
+                        wig_obj.to_step_height(3, "end_start").loc[:, wig_cols]])
+    for seqid in merged_df["variableStep_chrom"].unique():
+        tmp = merged_df[merged_df["variableStep_chrom"] == seqid].drop("variableStep_chrom", axis=1)
+        arr_dict[seqid] = tmp.to_numpy(copy=True)
+    return arr_dict, generate_locations(wig_df, args)
 
 
 def generate_locations(wig_df, args):
