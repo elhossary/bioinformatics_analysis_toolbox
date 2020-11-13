@@ -52,35 +52,32 @@ def main():
         if not seqid in f_raw_pos.keys():
             f_raw_pos[seqid] = []
         print(f"Predicting peaks for {seqid}+")
-        for arr in f_arrays:
-            print(f"Processing array of condition: {arr[2]}")
-            for loc in arr[1][seqid]:
-                f_proc.append(pool.apply_async(predict_locs_arr_slice,
-                                               args=(arr[0][seqid], loc[0], loc[1], args)))
-            proc_len = len(f_proc)
-            counter = 0
-            for p in f_proc:
-                counter += 1
-                sys.stdout.flush()
-                sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
-                f_raw_pos[seqid].extend(p.get())
-
+        seqid_arr_slices = [gen_list_of_arr_slices_from_arr(arr[0][seqid], arr[1][seqid]) for arr in f_arrays]
+        for seqid_arr_slice in seqid_arr_slices:
+            f_proc.append(pool.apply_async(generate_locs, args=(seqid_arr_slice[0], args)))
+        proc_len = len(f_proc)
+        counter = 0
+        for p in f_proc:
+            counter += 1
+            sys.stdout.flush()
+            sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
+            f_raw_pos[seqid].extend(p.get())
+        print("\n")
     for seqid in seqid_list:
         if not seqid in r_raw_pos.keys():
             r_raw_pos[seqid] = []
         print(f"Predicting peaks for {seqid}-")
-        for arr in r_arrays:
-            print(f"Processing array of condition: {arr[2]}")
-            for loc in arr[1][seqid]:
-                r_proc.append(pool.apply_async(predict_locs_arr_slice,
-                                               args=(arr[0][seqid], loc[0], loc[1], args)))
-            proc_len = len(r_proc)
-            counter = 0
-            for p in r_proc:
-                counter += 1
-                sys.stdout.flush()
-                sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
-                r_raw_pos[seqid].extend(p.get())
+        seqid_arr_slices = [gen_list_of_arr_slices_from_arr(arr[0][seqid], arr[1][seqid]) for arr in r_arrays]
+        for seqid_arr_slice in seqid_arr_slices:
+            r_proc.append(pool.apply_async(generate_locs, args=(seqid_arr_slice[0], args)))
+        proc_len = len(r_proc)
+        counter = 0
+        for p in r_proc:
+            counter += 1
+            sys.stdout.flush()
+            sys.stdout.write("\r" + f"Progress: {round(counter / proc_len * 100, 1)}%")
+            r_raw_pos[seqid].extend(p.get())
+        print("\n")
 
     pool.close()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
@@ -104,9 +101,8 @@ def main():
     peaks_gff_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
 
 
-def predict_locs_arr_slice(arr, start, end, args):
-    arr_slice = arr[np.logical_and(arr[:, 0] >= start, arr[:, 0] <= end)].copy()
-    return generate_locs(arr_slice, args)
+def gen_list_of_arr_slices_from_arr(arr, pos_list):
+    return [arr[np.logical_and(arr[:, 0] >= i[0], arr[:, 0] <= i[1])].copy() for i in pos_list]
 
 
 def generate_locs(wig_arr_slice, args):
@@ -178,6 +174,7 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
                        [wig_df.loc[:, wig_cols],
                         wig_obj.to_step_height(3, "start_end").loc[:, wig_cols],
                         wig_obj.to_step_height(3, "end_start").loc[:, wig_cols]])
+    merged_df["location"] = merged_df["location"].astype(int)
     for seqid in merged_df["variableStep_chrom"].unique():
         tmp = merged_df[merged_df["variableStep_chrom"] == seqid].drop("variableStep_chrom", axis=1)
         arr_dict[seqid] = tmp.to_numpy(copy=True)
@@ -204,6 +201,7 @@ def create_wiggle_obj(fpath, chrom_sizes):
 
 
 def _merge_interval_lists(list_in, merge_range):
+    list_in = [list(map(int, x)) for x in list_in]
     list_in = sorted(list_in)
     merge_range += 2
     list_out = []
