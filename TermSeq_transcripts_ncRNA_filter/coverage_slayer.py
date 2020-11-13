@@ -53,6 +53,7 @@ def main():
             f_raw_pos[seqid] = []
         print(f"Predicting peaks for {seqid}+")
         for arr in f_arrays:
+            print(f"Processing array of condition: {arr[2]}")
             for loc in arr[1][seqid]:
                 f_proc.append(pool.apply_async(predict_locs_arr_slice,
                                                args=(arr[0][seqid], loc[0], loc[1], args)))
@@ -69,6 +70,7 @@ def main():
             r_raw_pos[seqid] = []
         print(f"Predicting peaks for {seqid}-")
         for arr in r_arrays:
+            print(f"Processing array of condition: {arr[2]}")
             for loc in arr[1][seqid]:
                 r_proc.append(pool.apply_async(predict_locs_arr_slice,
                                                args=(arr[0][seqid], loc[0], loc[1], args)))
@@ -168,7 +170,9 @@ def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge
 def convert_wiggle_obj_to_arr(wig_obj, args):
     arr_dict = {}
     wig_cols = ["variableStep_chrom", "location", "score"]
-    wig_df = wig_obj.get_wiggle().loc[:, wig_cols]
+    wig_df = wig_obj.get_wiggle()
+    cond_name = wig_df.iat[0, 1]
+    wig_df = wig_df.loc[:, wig_cols]
     wig_df["score"] = wig_df["score"].abs()
     merged_df = reduce(lambda x, y: pd.merge(x, y, on=["variableStep_chrom", "location"], how='left'),
                        [wig_df.loc[:, wig_cols],
@@ -177,7 +181,7 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
     for seqid in merged_df["variableStep_chrom"].unique():
         tmp = merged_df[merged_df["variableStep_chrom"] == seqid].drop("variableStep_chrom", axis=1)
         arr_dict[seqid] = tmp.to_numpy(copy=True)
-    return arr_dict, generate_locations(wig_df, args)
+    return arr_dict, generate_locations(wig_df, args), cond_name
 
 
 def generate_locations(wig_df, args):
