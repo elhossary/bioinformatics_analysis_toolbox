@@ -146,10 +146,10 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
     arr_dict = {}
     wig_cols = ["variableStep_chrom", "location", "score"]
     wig_df = wig_obj.get_wiggle()
-    wig_df[wig_df["score"] <= args.ignore_coverage] = 0.0
     cond_name = wig_df.iat[0, 1]
     wig_df = wig_df.loc[:, wig_cols]
     wig_df["score"] = wig_df["score"].abs()
+    wig_df.loc[wig_df['score'] <= args.ignore_coverage] = 0.0
     merged_df = reduce(lambda x, y: pd.merge(x, y, on=["variableStep_chrom", "location"], how='left'),
                        [wig_df.loc[:, wig_cols],
                         wig_obj.to_step_height(step_size, "start_end").loc[:, wig_cols],
