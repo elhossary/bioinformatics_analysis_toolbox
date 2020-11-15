@@ -19,7 +19,7 @@ def main():
     parser.add_argument("--min_len", default=35, help="", type=int)
     parser.add_argument("--max_len", default=300, help="", type=int)
     parser.add_argument("--peak_distance", default=140, help="", type=int)
-    parser.add_argument("--ignore_coverage", default=5, help="", type=int)
+    parser.add_argument("--ignore_coverage", default=10, help="", type=int)
     parser.add_argument("--threads", default=1, help="", type=int)
     parser.add_argument("--annotation_type", required=True, help="", type=str)
     parser.add_argument("--gff_out", required=True, help="", type=str)
