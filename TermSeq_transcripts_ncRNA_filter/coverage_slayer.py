@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--min_len", default=35, help="", type=int)
     parser.add_argument("--max_len", default=300, help="", type=int)
     parser.add_argument("--peak_distance", default=140, help="", type=int)
+    parser.add_argument("--ignore_coverage", default=5, help="", type=int)
     parser.add_argument("--threads", default=1, help="", type=int)
     parser.add_argument("--annotation_type", required=True, help="", type=str)
     parser.add_argument("--gff_out", required=True, help="", type=str)
@@ -145,6 +146,7 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
     arr_dict = {}
     wig_cols = ["variableStep_chrom", "location", "score"]
     wig_df = wig_obj.get_wiggle()
+    wig_df[wig_df["score"] <= args.ignore_coverage] = 0.0
     cond_name = wig_df.iat[0, 1]
     wig_df = wig_df.loc[:, wig_cols]
     wig_df["score"] = wig_df["score"].abs()
