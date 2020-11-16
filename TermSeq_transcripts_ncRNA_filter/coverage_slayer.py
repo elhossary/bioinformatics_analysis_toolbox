@@ -47,22 +47,13 @@ def main():
     r_arrays = [convert_wiggle_obj_to_arr(i, args) for i in r_wiggles]
     del r_wiggles
     f_raw_predicted_locs = {}
-    predict_pool = mp.Pool(processes=args.threads)
-    f_predict_process = []
-    r_predict_process = []
     for arr_obj in f_arrays:
         print(f"Predicting peaks for condition: '{arr_obj[1]}'")
-        seqid = ""
         for seqid_key in arr_obj[0].keys():
-            seqid = seqid_key
             print(f"\tProcessing sequence ID: '{seqid_key}'")
             if seqid_key not in f_raw_predicted_locs.keys():
                 f_raw_predicted_locs[seqid_key] = []
-            f_predict_process.append(predict_pool.apply_async(generate_locs,
-                                                              args=(arr_obj[0][seqid_key], args, False, arr_obj[1])))
-        for p in f_predict_process:
-            f_raw_predicted_locs[seqid].extend(p.get())
-            #f_raw_predicted_locs[seqid_key].extend(generate_locs(arr_obj[0][seqid_key], args, False, arr_obj[1]))
+            f_raw_predicted_locs[seqid_key].extend(generate_locs(arr_obj[0][seqid_key], args, False, arr_obj[1]))
     r_raw_predicted_locs = {}
     for arr_obj in r_arrays:
         print(f"Predicting peaks for condition: '{arr_obj[1]}'")
@@ -124,7 +115,7 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
             coverage_array[np.logical_and(lower_loc <= coverage_array[:, 0], coverage_array[:, 0] <= upper_loc)]
             [:, 1].copy().tolist()), 2)
         if upper_loc - lower_loc + 1 in length_range:
-            ret_locs.append([lower_loc, upper_loclocation, average_coverage,
+            ret_locs.append([lower_loc, upper_loc, average_coverage,
                              f"{cond_name}_with_best_ave_coverage_{average_coverage}"])
     return ret_locs
 
