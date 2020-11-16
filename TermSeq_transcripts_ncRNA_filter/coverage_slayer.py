@@ -8,6 +8,7 @@ import numpy as np
 from functools import reduce
 import argparse
 import multiprocessing as mp
+from statistics import mean
 
 
 def main():
@@ -67,12 +68,12 @@ def main():
     for k, v in f_raw_predicted_locs.items():
         print(f"Generating annotations from merged overlapping positions for forward sequence ID: {k}")
         peaks_gff_df = peaks_gff_df.append(
-            generate_annotations_from_positions(v, k, "+", args.annotation_type, 0),
+            generate_annotations_from_positions(v, k, "+", args.annotation_type, 0, args),
             ignore_index=True)
     for k, v in r_raw_predicted_locs.items():
         print(f"Generating annotations from merged overlapping positions for reverse sequence ID: {k}")
         peaks_gff_df = peaks_gff_df.append(
-            generate_annotations_from_positions(v, k, "-", args.annotation_type, 0),
+            generate_annotations_from_positions(v, k, "-", args.annotation_type, 0, args),
             ignore_index=True)
     print("Filtering by length")
     peaks_gff_df["len"] = peaks_gff_df["end"] - peaks_gff_df["start"] + 1
@@ -111,23 +112,26 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
         lower_loc = int(max(lowers))
         upper_loc = int(min(uppers))
         if upper_loc - lower_loc + 1 in length_range:
-            ret_locs.append([lower_loc, upper_loc, f"{cond_name}_{lower_loc}:{upper_loc}"])
+            average_coverage = round(mean(
+                coverage_array[np.logical_and(lower_loc <= coverage_array[:, 0], coverage_array[:, 0] <= upper_loc)]
+                [:, 1].tolist()), 2)
+            ret_locs.append([lower_loc, upper_loc, f"{cond_name}_{lower_loc}:{upper_loc}", average_coverage])
     return ret_locs
 
 
-def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge_range):
+def generate_annotations_from_positions(list_out, seqid, strand, new_type, merge_range, args):
     strand_letter_func = lambda x: "F" if x == "+" else "R"
     anno_counter = 0
     anno_list = []
     if list_out:
-        list_out, _ = _merge_interval_lists(list_out, merge_range)
+        list_out, _ = _merge_interval_lists(list_out, merge_range, args.max_len)
         list_out.extend(_)
         for i in list_out:
             anno_counter += 1
             attr = f"ID={seqid}{strand_letter_func(strand)}_{anno_counter}" \
                    f";Name={seqid}_{strand_letter_func(strand)}_{new_type}_{anno_counter}" \
                    f";seq_len={i[1] - i[0] + 1}" \
-                   f";conditions={i[2]}"
+                   f";conditions={i[2]};average_coverages={i[3]}"
             anno_list.append(
                 {"seqid": seqid,
                  "source": "COVERAGE_SLAYER",
@@ -149,7 +153,7 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
     cond_name = wig_df.iat[0, 1]
     wig_df = wig_df.loc[:, wig_cols]
     wig_df["score"] = wig_df["score"].abs()
-    wig_df.loc[wig_df['score'] <= args.ignore_coverage] = 0.0
+    wig_df.loc[wig_df['score'] <= args.ignore_coverage, ["score"]] = 0.0
     merged_df = reduce(lambda x, y: pd.merge(x, y, on=["variableStep_chrom", "location"], how='left'),
                        [wig_df.loc[:, wig_cols],
                         wig_obj.to_step_height(step_size, "start_end").loc[:, wig_cols],
@@ -165,22 +169,45 @@ def create_wiggle_obj(fpath, chrom_sizes):
     return Wiggle(fpath, chrom_sizes, is_len_extended=True)
 
 
-def _merge_interval_lists(list_in, merge_range):
+def _merge_interval_lists(list_in, merge_range, max_len):
+    select_func = lambda x, y: x if x[3] > y[3] else y if y[3] > x[3] else None
     print("Merging overlapping locations")
     merge_range += 2
     list_out = []
     list_in = sorted(list_in)
     overlap_indices = []
-    for loc in list_in:
+    for new_loc in list_in:
         if list_out:
-            if loc[0] in range(list_out[-1][0], list_out[-1][1] + merge_range):
-                list_out[-1][1] = max([loc[1], list_out[-1][1]])
-                list_out[-1][2] += f",{loc[2]}"
-                overlap_indices.append(list_out.index(list_out[-1]))
+            if new_loc[0] in range(list_out[-1][0], list_out[-1][1] + merge_range):
+                # check if the new merge will exceed the max allowed length
+                if new_loc[1] - list_out[-1][0] + 1 > max_len:
+                    selected_loc = select_func(list_out[-1], new_loc)
+                    if selected_loc is not None:
+                        list_out[-1][0], list_out[-1][1] = selected_loc[0], selected_loc[1]
+                        list_out[-1][2] += f",{new_loc[2]}" if new_loc[2] not in selected_loc[2] else ""
+                        list_out[-1][3] += f",{new_loc[3]}" if new_loc[3] not in selected_loc[3] else ""
+                        overlap_indices.append(list_out.index(selected_loc))
+                    else:
+                        list_out.append(new_loc)
+                else:
+                    list_out[-1][1] = max([new_loc[1], list_out[-1][1]])
+                    list_out[-1][2] += f",{new_loc[2]}"
+                    list_out[-1][3] += f",{new_loc[3]}"
+                    overlap_indices.append(list_out.index(list_out[-1]))
             else:
-                list_out.append(loc)
+                # check neighbors if no overlap
+                if new_loc[1] - list_out[-1][0] + 1 in range(0, max_len + 1, 1):
+                    selected_loc = select_func(list_out[-1], new_loc)
+                    if selected_loc is not None:
+                        list_out[-1][0], list_out[-1][1] = selected_loc[0], selected_loc[1]
+                        list_out[-1][2] += f",{new_loc[2]}" if new_loc[2] not in selected_loc[2] else ""
+                        overlap_indices.append(list_out.index(selected_loc))
+                    else:
+                        list_out.append(new_loc)
+                else:
+                    list_out.append(new_loc)
         else:
-            list_out.append(loc)
+            list_out.append(new_loc)
     overlap_indices = list(set(overlap_indices))
     overlap_indices.sort()
     overlaps_list_out = [list_out[i] for i in overlap_indices]
