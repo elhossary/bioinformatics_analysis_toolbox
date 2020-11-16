@@ -185,14 +185,15 @@ def _merge_interval_lists(list_in, merge_range, max_len):
                     if selected_loc is not None:
                         list_out[-1][0], list_out[-1][1] = selected_loc[0], selected_loc[1]
                         list_out[-1][2] += f",{new_loc[2]}" if new_loc[2] not in selected_loc[2] else ""
-                        list_out[-1][3] += f",{new_loc[3]}" if new_loc[3] not in selected_loc[3] else ""
+                        list_out[-1][3] = f"{str(list_out[-1][3])},{str(new_loc[3])}"\
+                            if new_loc[3] not in selected_loc[3] else f"{str(list_out[-1][3])}"
                         overlap_indices.append(list_out.index(selected_loc))
                     else:
                         list_out.append(new_loc)
                 else:
                     list_out[-1][1] = max([new_loc[1], list_out[-1][1]])
                     list_out[-1][2] += f",{new_loc[2]}"
-                    list_out[-1][3] += f",{new_loc[3]}"
+                    list_out[-1][3] = f"{str(list_out[-1][3])},{str(new_loc[3])}"
                     overlap_indices.append(list_out.index(list_out[-1]))
             else:
                 # check neighbors if no overlap
