@@ -47,13 +47,22 @@ def main():
     r_arrays = [convert_wiggle_obj_to_arr(i, args) for i in r_wiggles]
     del r_wiggles
     f_raw_predicted_locs = {}
+    predict_pool = mp.Pool(processes=args.threads)
+    f_predict_process = []
+    r_predict_process = []
     for arr_obj in f_arrays:
         print(f"Predicting peaks for condition: '{arr_obj[1]}'")
+        seqid = ""
         for seqid_key in arr_obj[0].keys():
+            seqid = seqid_key
             print(f"\tProcessing sequence ID: '{seqid_key}'")
             if seqid_key not in f_raw_predicted_locs.keys():
                 f_raw_predicted_locs[seqid_key] = []
-            f_raw_predicted_locs[seqid_key].extend(generate_locs(arr_obj[0][seqid_key], args, False, arr_obj[1]))
+            f_predict_process.append(predict_pool.apply_async(generate_locs,
+                                                              args=(arr_obj[0][seqid_key], args, False, arr_obj[1])))
+        for p in f_predict_process:
+            f_raw_predicted_locs[seqid].extend(p.get())
+            #f_raw_predicted_locs[seqid_key].extend(generate_locs(arr_obj[0][seqid_key], args, False, arr_obj[1]))
     r_raw_predicted_locs = {}
     for arr_obj in r_arrays:
         print(f"Predicting peaks for condition: '{arr_obj[1]}'")
@@ -94,13 +103,13 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
     # of course column 0 is for location
     wig_peaks, wig_peaks_prop =\
         find_peaks(coverage_array[:, 1],
-                   distance=args.peak_distance, width=(args.min_len, args.max_len))
+                   distance=args.peak_distance, width=(args.min_len, args.max_len), rel_height=1)
     rising_peaks, rising_peaks_prop =\
         find_peaks(coverage_array[:, 2],
-                   distance=args.peak_distance)
+                   distance=args.peak_distance, width=(1, 7), rel_height=1)
     falling_peaks, falling_peaks_prop =\
         find_peaks(coverage_array[:, 3],
-                   distance=args.peak_distance)
+                   distance=args.peak_distance, width=(1, 7), rel_height=1)
     wig_locs = [coverage_array[i, 0] for i in wig_peaks]
     rising_locs = [coverage_array[i, 0] for i in rising_peaks]
     falling_locs = [coverage_array[i, 0] for i in falling_peaks]
@@ -113,10 +122,10 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
         upper_loc = int(min(uppers))
         average_coverage = round(mean(
             coverage_array[np.logical_and(lower_loc <= coverage_array[:, 0], coverage_array[:, 0] <= upper_loc)]
-            [:, 1].tolist()), 2)
+            [:, 1].copy().tolist()), 2)
         if upper_loc - lower_loc + 1 in length_range:
-            ret_locs.append([lower_loc, upper_loc, average_coverage,
-                             f"{cond_name}_loc_{lower_loc}:{upper_loc}_coverage_mean_{average_coverage}"])
+            ret_locs.append([lower_loc, upper_loclocation, average_coverage,
+                             f"{cond_name}_with_best_ave_coverage_{average_coverage}"])
     return ret_locs
 
 
@@ -171,39 +180,39 @@ def create_wiggle_obj(fpath, chrom_sizes):
 
 
 def _merge_interval_lists(list_in, args):
-
-    # Incecies of location information
+    # Indices of location information
     start = 0
     end = 1
     cov_mean = 2
     cond_name = 3
     last_loc = -1
+    ################
     select_func = lambda x, y: x if x[cov_mean] > y[cov_mean] else y if y[cov_mean] > x[cov_mean] else None
     print("Merging overlapping locations")
-    merge_range = args.merge_range + 2
+    merge_range = args.merge_range + 1
     list_out = []
     list_in = sorted(list_in)
     overlap_indices = []
     for new_loc in list_in:
         if list_out:
             if new_loc[start] in range(list_out[last_loc][start], list_out[last_loc][end] + merge_range):
-                # check if the new merge will exceed the max allowed length
-                if new_loc[end] - list_out[last_loc][start] + 1 <= args.max_len:
+                selected_loc = select_func(list_out[last_loc], new_loc)
+                if selected_loc is None:
                     list_out[last_loc][end] = max([new_loc[end], list_out[last_loc][end]])
                     list_out[last_loc][cond_name] += f",{new_loc[cond_name]}"
-                    overlap_indices.append(list_out.index(list_out[last_loc]))
                 else:
-                    selected_loc = select_func(list_out[last_loc], new_loc)
-                    if selected_loc is None:
-                        list_out.append(new_loc)
-                    else:
-                        list_out[last_loc][start], list_out[last_loc][end], list_out[last_loc][cond_name] = \
-                            selected_loc[start], selected_loc[end], selected_loc[cond_name]
+                    list_out[last_loc][start], list_out[last_loc][end], list_out[last_loc][cond_name] = \
+                        selected_loc[start], selected_loc[end], selected_loc[cond_name]
+
+                if list_out[last_loc] not in overlap_indices:
+                    overlap_indices.append(list_out.index(list_out[last_loc]))
+                overlap_indices.append(list_out.index(new_loc))
             else:
                 # check neighbors if no overlap
                 if new_loc[end] - list_out[last_loc][start] + 1 in range(0, args.max_len + 1, 1) and \
-                        new_loc[start] - list_out[last_loc][end] + 1 in range(0, args.peak_distance):
+                        new_loc[start] - list_out[last_loc][end] + 1 in range(0, args.min_len):
                     selected_loc = select_func(list_out[last_loc], new_loc)
+
                     if selected_loc is None:
                         list_out.append(new_loc)
                     else:
@@ -213,6 +222,7 @@ def _merge_interval_lists(list_in, args):
                     list_out.append(new_loc)
         else:
             list_out.append(new_loc)
+
     overlap_indices = list(set(overlap_indices))
     overlap_indices.sort()
     overlaps_list_out = [list_out[i] for i in overlap_indices]
