@@ -176,33 +176,32 @@ def _selective_merge_interval_lists(list_in, args):
     list_out = []
     overlap_indices = []
     for loc in list_in:
-        if list_out:
-            if loc[start] in range(list_out[last][start], list_out[last][end] + args.merge_range):
-                if loc[end] - list_out[last][start] + 1 > args.max_len():
-                    selected = select_func(list_out[last], loc)
-                    if selected == 1:
-                        pass
-                    elif selected == 2:
-                        list_out[last] = loc
-                    else:
-                        list_out.append(loc)
-                else:
-                    list_out[last][1] = max([loc[end], list_out[last][end]])
-                    list_out[last][2] = str(list_out[last][cmean]) + "," + str(loc[cmean])
-                    list_out[last][3] += f",{loc[name]}"
-                overlap_indices.append(list_out.index(list_out[last]))
-            else:
-                """
-                ERROR
-                # Check if the gap between non overlapping locations is too close
-                if loc[start] - list_out[last][end] - 1 <= args.min_len:
-                    checked = select_func(list_out[last], loc)
-                    if checked == 2:
-                        list_out[last] = loc
-                """
-                list_out.append(loc)
-        else:
+        if not list_out:
+            # append first element
             list_out.append(loc)
+            continue
+        if loc[start] in range(list_out[last][start], list_out[last][end] + args.merge_range):
+            if loc[end] - list_out[last][start] + 1 > args.max_len:
+                selected = select_func(list_out[last], loc)
+                if selected == 1:
+                    pass
+                elif selected == 2:
+                    list_out[last] = loc
+                else:
+                    list_out.append(loc)
+            else:
+                list_out[last][1] = max([loc[end], list_out[last][end]])
+                list_out[last][2] = max([list_out[last][cmean], loc[cmean]])
+                list_out[last][3] += f",{loc[name]}"
+            overlap_indices.append(list_out.index(list_out[last]))
+        else:
+            # Check if the gap between non overlapping locations is too close
+            if loc[start] - list_out[last][end] - 1 <= args.min_len:
+                checked = select_func(list_out[last], loc)
+                if checked == 2:
+                    list_out[last] = loc
+            #list_out.append(loc)
+
     overlap_indices = list(set(overlap_indices))
     overlap_indices.sort()
     overlaps_list_out = [list_out[i] for i in overlap_indices]
