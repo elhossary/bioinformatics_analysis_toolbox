@@ -102,39 +102,32 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
     # Assuming that the incoming array have the raw coverage values at column 1,
     # where the rising step height at 2, and falling step height at 3
     # of course column 0 is for location
-    wig_peaks, wig_peaks_prop =\
+    wig_peaks, wig_peaks_prop = \
         find_peaks(coverage_array[:, 1],
-                   width=(args.min_len, args.max_len),
-                   height=(args.ignore_coverage, None),
+                   distance=args.peak_distance, width=(args.min_len, args.max_len))
+    rising_peaks, rising_peaks_prop = \
+        find_peaks(coverage_array[:, 2],
                    distance=args.peak_distance)
-    rising_peaks, rising_peaks_prop = find_peaks(coverage_array[:, 2])
-    falling_peaks, falling_peaks_prop = find_peaks(coverage_array[:, 3])
+    falling_peaks, falling_peaks_prop = \
+        find_peaks(coverage_array[:, 3],
+                   distance=args.peak_distance)
     wig_locs = [coverage_array[i, 0] for i in wig_peaks]
     rising_locs = [coverage_array[i, 0] for i in rising_peaks]
     falling_locs = [coverage_array[i, 0] for i in falling_peaks]
-
     locs_len = len(wig_locs)
     counter = 0
-    for wl in wig_locs:
-        loc = int(wl)
+    for loc in wig_locs:
         counter += 1
         sys.stdout.flush()
         sys.stdout.write("\r" + f"\t\tProgress: {round(counter / locs_len * 100, 1)}%")
-        lowers = [int(i) for i in falling_locs if loc >= i] if is_reversed\
-            else [int(i) for i in rising_locs if loc >= i]
-        uppers = [int(i) for i in rising_locs if loc <= i] if is_reversed\
-            else [int(i) for i in falling_locs if loc <= i]
+        lowers = [i for i in falling_locs if loc >= i] if is_reversed else [i for i in rising_locs if loc >= i]
+        uppers = [i for i in rising_locs if loc <= i] if is_reversed else [i for i in falling_locs if loc <= i]
         if not uppers or not lowers:
             continue
-        loc_lower_range = set(range(loc - args.max_len, loc + 1, 1))
-        loc_upper_range = set(range(loc, loc + args.max_len + 1, 1))
-        valid_lowers = list(loc_lower_range.intersection(set(lowers)))
-        valid_uppers = list(loc_upper_range.intersection(set(uppers)))
-        valid_combinations = [i for i in product(valid_lowers, valid_uppers) if i[1] - i[0] + 1 in length_range]
-        comb_coverages = [mean_func(comb) for comb in valid_combinations]
-        max_comb = max(comb_coverages)
-        selection = valid_combinations[comb_coverages.index(max_comb)]
-        ret_locs.append([selection[0], selection[1], round(max_comb), cond_name])
+        lower_loc = int(max(lowers))
+        upper_loc = int(min(uppers))
+        if upper_loc - lower_loc + 1 in length_range:
+            ret_locs.append([lower_loc, upper_loc, mean_func([lower_loc, upper_loc]), cond_name])
     return ret_locs
 
 
@@ -150,7 +143,7 @@ def generate_annotations_from_positions(list_out, seqid, strand, new_type, args)
             attr = f"ID={seqid}{strand_letter_func(strand)}_{anno_counter}" \
                    f";Name={seqid}_{strand_letter_func(strand)}_{new_type}_{anno_counter}" \
                    f";seq_len={i[1] - i[0] + 1}" \
-                   f";condition={i[3]};best_mean_coverage={i[2]}"
+                   f";condition={i[3]};best_mean_coverage={round(i[2], 2)}"
             anno_list.append(
                 {"seqid": seqid,
                  "source": "COVERAGE_SLAYER",
@@ -180,8 +173,9 @@ def _selective_merge_interval_lists(list_in, args):
             # append first element
             list_out.append(loc)
             continue
-        if loc[start] in range(list_out[last][start], list_out[last][end] + args.merge_range):
+        if loc[start] in range(list_out[last][start], list_out[last][end] + 1 + args.merge_range):
             if loc[end] - list_out[last][start] + 1 > args.max_len:
+                # Don't merge overlap if the length will be exceeded
                 selected = select_func(list_out[last], loc)
                 if selected == 1:
                     pass
@@ -190,17 +184,19 @@ def _selective_merge_interval_lists(list_in, args):
                 else:
                     list_out.append(loc)
             else:
+                # Safe to merge
                 list_out[last][1] = max([loc[end], list_out[last][end]])
                 list_out[last][2] = max([list_out[last][cmean], loc[cmean]])
                 list_out[last][3] += f",{loc[name]}"
-            overlap_indices.append(list_out.index(list_out[last]))
+                overlap_indices.append(list_out.index(list_out[last]))
+            continue
+        # Check if the gap between non overlapping locations are too close
+        if loc[start] - list_out[last][end] - 1 <= args.peak_distance:
+            checked = select_func(list_out[last], loc)
+            if checked == 2:
+                list_out[last] = loc
         else:
-            # Check if the gap between non overlapping locations is too close
-            if loc[start] - list_out[last][end] - 1 <= args.min_len:
-                checked = select_func(list_out[last], loc)
-                if checked == 2:
-                    list_out[last] = loc
-            #list_out.append(loc)
+            list_out.append(loc)
 
     overlap_indices = list(set(overlap_indices))
     overlap_indices.sort()
