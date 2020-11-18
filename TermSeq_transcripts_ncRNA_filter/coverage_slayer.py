@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--refseq_in", required=True, help="", type=str)
     parser.add_argument("--wigs_in", required=True, help="", type=str, nargs="+")
     parser.add_argument("--merge_range", default=0, help="", type=int)
+    parser.add_argument("--max_gap", default=20, help="", type=int)
     parser.add_argument("--min_len", default=30, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
     parser.add_argument("--peak_distance", default=50, help="", type=int)
@@ -28,6 +29,7 @@ def main():
     parser.add_argument("--annotation_type", required=True, help="", type=str)
     parser.add_argument("--gff_out", required=True, help="", type=str)
     args = parser.parse_args()
+    args.merge_range += 1
     chrom_sizes = get_chrom_sizes([os.path.abspath(args.refseq_in)])
 
     print("Parsing wiggles")
@@ -116,6 +118,7 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
     falling_locs = [coverage_array[i, 0] for i in falling_peaks]
     locs_len = len(wig_locs)
     counter = 0
+
     for loc in wig_locs:
         counter += 1
         sys.stdout.flush()
@@ -128,7 +131,32 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
         upper_loc = int(min(uppers))
         if upper_loc - lower_loc + 1 in length_range:
             ret_locs.append([lower_loc, upper_loc, mean_func([lower_loc, upper_loc]), cond_name])
-    return ret_locs
+    return merge_locations_with_gaps(ret_locs, args, coverage_array)
+
+
+def merge_locations_with_gaps(list_in, args, coverage_array):
+    mean_func = lambda pos: mean(coverage_array[pos[0] - 1:pos[1] - 1, 1].tolist())
+    gap_range = range(0, args.max_gap + 2, 1)
+    length_range = range(args.min_len, args.max_len + 1, 1)
+    list_in = sorted(list_in, key=lambda l: (l[0], l[1]))
+    start = 0
+    end = 1
+    cmean = 2
+    last = -1
+    list_out = []
+    for loc in list_in:
+        if not list_out:
+            # append first element
+            list_out.append(loc)
+            continue
+        # check the gap between the new candidate and latest appended one
+        if loc[start] - list_out[last][end] - 1 in gap_range and \
+                loc[start] - list_out[last][0] + 1 in length_range:
+            list_out[last][end] = loc[end]
+            list_out[last][cmean] = mean_func([list_out[last][start], list_out[last][end]])
+        else:
+            list_out.append(loc)
+    return list_out
 
 
 def generate_annotations_from_positions(list_out, seqid, strand, new_type, args):
@@ -165,7 +193,6 @@ def _selective_merge_interval_lists(list_in, args):
     last = -1
     select_func = lambda x, y: 1 if x[cmean] > y[cmean] else 2 if y[cmean] > x[cmean] else 0
     list_in = sorted(list_in, key=lambda l: (l[0], l[1]))
-    args.merge_range += 2
     list_out = []
     overlap_indices = []
     for loc in list_in:
