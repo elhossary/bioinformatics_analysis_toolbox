@@ -109,10 +109,10 @@ def generate_locs(coverage_array, args, is_reversed, cond_name):
                    distance=args.peak_distance, width=(args.min_len, args.max_len), rel_height=1)
     rising_peaks, rising_peaks_prop = \
         find_peaks(coverage_array[:, 2],
-                   distance=args.peak_distance)
+                   distance=args.peak_distance, width=(None, None), rel_height=1)
     falling_peaks, falling_peaks_prop = \
         find_peaks(coverage_array[:, 3],
-                   distance=args.peak_distance)
+                   distance=args.peak_distance, width=(None, None), rel_height=1)
     wig_locs = [coverage_array[i, 0] for i in wig_peaks]
     rising_locs = [coverage_array[i, 0] for i in rising_peaks]
     falling_locs = [coverage_array[i, 0] for i in falling_peaks]
