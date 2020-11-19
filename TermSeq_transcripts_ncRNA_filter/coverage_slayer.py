@@ -1,4 +1,3 @@
-from itertools import product
 import pandas as pd
 import os
 from Bio import SeqIO
@@ -10,7 +9,7 @@ import numpy as np
 from functools import reduce
 import argparse
 import multiprocessing as mp
-import threading
+from more_itertools import consecutive_groups
 from statistics import mean
 
 
@@ -23,7 +22,6 @@ def main():
     parser.add_argument("--max_gap", default=20, help="", type=int)
     parser.add_argument("--min_len", default=30, help="", type=int)
     parser.add_argument("--max_len", default=350, help="", type=int)
-    parser.add_argument("--peak_distance", default=50, help="", type=int)
     parser.add_argument("--ignore_coverage", default=10, help="", type=int)
     parser.add_argument("--threads", default=1, help="", type=int)
     parser.add_argument("--annotation_type", required=True, help="", type=str)
@@ -94,44 +92,61 @@ def main():
 
 
 def generate_locs(coverage_array, args, is_reversed, cond_name):
-    length_range = range(args.min_len, args.max_len + 1, 1)
-    """
-    mean_func = lambda pos: mean(coverage_array[np.logical_and(pos[0] <= coverage_array[:, 0],
-                                                               coverage_array[:, 0] <= pos[1])][:, 1].tolist())
-    """
-    mean_func = lambda pos: mean(coverage_array[pos[0] - 1:pos[1] - 1, 1].tolist())
-    ret_locs = []
     # Assuming that the incoming array have the raw coverage values at column 1,
     # where the rising step height at 2, and falling step height at 3
     # of course column 0 is for location
-    wig_peaks, wig_peaks_prop = \
-        find_peaks(coverage_array[:, 1],
-                   distance=args.peak_distance, width=(args.min_len, args.max_len), rel_height=1)
-    rising_peaks, rising_peaks_prop = \
-        find_peaks(coverage_array[:, 2],
-                   distance=args.peak_distance, width=(None, None), rel_height=1)
-    falling_peaks, falling_peaks_prop = \
-        find_peaks(coverage_array[:, 3],
-                   distance=args.peak_distance, width=(None, None), rel_height=1)
-    wig_locs = [coverage_array[i, 0] for i in wig_peaks]
-    rising_locs = [coverage_array[i, 0] for i in rising_peaks]
-    falling_locs = [coverage_array[i, 0] for i in falling_peaks]
-    locs_len = len(wig_locs)
+    mean_func = lambda pos: mean(coverage_array[pos[0] - 1:pos[1] - 1, 1].tolist())
+    rising_peaks, _ = find_peaks(coverage_array[:, 2])
+    falling_peaks, _ = find_peaks(coverage_array[:, 3])
+    rising_peaks_list = rising_peaks.tolist()
+    falling_peaks_list = falling_peaks.tolist()
+    falling_peaks_set = set(falling_peaks_list)
+    rising_peaks_len = len(rising_peaks_list)
     counter = 0
-
-    for loc in wig_locs:
+    possible_locations = []
+    for rp in rising_peaks_list:
         counter += 1
         sys.stdout.flush()
-        sys.stdout.write("\r" + f"\t\tProgress: {round(counter / locs_len * 100, 1)}%")
-        lowers = [i for i in falling_locs if loc >= i] if is_reversed else [i for i in rising_locs if loc >= i]
-        uppers = [i for i in rising_locs if loc <= i] if is_reversed else [i for i in falling_locs if loc <= i]
-        if not uppers or not lowers:
+        sys.stdout.write("\r" + f"\t\tProgress: {round(counter / rising_peaks_len * 100, 1)}%")
+        rp_height = coverage_array[rp, 2]
+        range_start = max(rp - args.max_len, 0) if is_reversed else rp + args.min_len
+        range_end = rp - args.min_len if is_reversed else rp + args.max_len
+        fp_range = set(range(range_start, range_end, 1))
+        possible_fp = list(falling_peaks_set.intersection(fp_range))
+        if not possible_fp:
             continue
-        lower_loc = int(max(lowers))
-        upper_loc = int(min(uppers))
-        if upper_loc - lower_loc + 1 in length_range:
-            ret_locs.append([lower_loc, upper_loc, mean_func([lower_loc, upper_loc]), cond_name])
-    return merge_locations_with_gaps(ret_locs, args, coverage_array)
+        possible_fp_heights = coverage_array[possible_fp, 3].tolist()
+        closest_falling_cov = min(possible_fp_heights, key=lambda x: abs(x - rp_height))
+        closest_cov_fp = possible_fp[possible_fp_heights.index(closest_falling_cov)]
+        upper_loc = int(coverage_array[rp, 0]) if is_reversed else int(coverage_array[closest_cov_fp, 0])
+        lower_loc = int(coverage_array[closest_cov_fp, 0]) if is_reversed else int(coverage_array[rp, 0])
+        possible_locations.append([lower_loc, upper_loc, mean_func([lower_loc, upper_loc]), cond_name])
+    possible_locations = select_highest_mean_coverage_from_overlaps(possible_locations)
+    possible_locations = merge_locations_with_gaps(possible_locations, args, coverage_array)
+    print(f"\t\tLocations found: {len(possible_locations)}")
+    return possible_locations
+
+
+def select_highest_mean_coverage_from_overlaps(list_in):
+    list_in = sorted(list_in, key=lambda l: (l[0], l[1]))
+    start = 0
+    end = 1
+    cmean = 2
+    last = -1
+    select_func = lambda x, y: 1 if x[cmean] > y[cmean] else 2 if y[cmean] > x[cmean] else 0
+    list_out = []
+    for loc in list_in:
+        if not list_out:
+            # append first element
+            list_out.append(loc)
+            continue
+        if loc[start] in range(list_out[last][start], list_out[last][end] + 2):
+            selected = select_func(list_out[last], loc)
+            if selected == 2:
+                list_out[last] = loc
+        else:
+            list_out.append(loc)
+    return list_out
 
 
 def merge_locations_with_gaps(list_in, args, coverage_array):
@@ -249,8 +264,8 @@ def convert_wiggle_obj_to_arr(wig_obj, args):
     #merged_df.loc[merged_df[merged_df.columns[-2]] <= args.ignore_coverage / 2, merged_df.columns[-2]] = 0.0
     #merged_df.loc[merged_df[merged_df.columns[-1]] <= args.ignore_coverage / 2, merged_df.columns[-1]] = 0.0
     for seqid in merged_df["variableStep_chrom"].unique():
-        tmp = merged_df[merged_df["variableStep_chrom"] == seqid].drop("variableStep_chrom", axis=1)
-        arr_dict[seqid] = np.absolute(tmp.to_numpy(copy=True))
+        tmp_merged = merged_df[merged_df["variableStep_chrom"] == seqid].drop("variableStep_chrom", axis=1).copy()
+        arr_dict[seqid] = np.absolute(tmp_merged.to_numpy(copy=True))
     return arr_dict, cond_name
 
 
