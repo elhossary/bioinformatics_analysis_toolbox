@@ -233,7 +233,7 @@ def _selective_merge_interval_lists(list_in, args):
                 overlap_indices.append(list_out.index(list_out[last]))
             continue
         # Check if the gap between non overlapping locations are too close
-        if loc[start] - list_out[last][end] - 1 <= args.peak_distance:
+        if loc[start] - list_out[last][end] - 1 <= args.max_gap:
             checked = select_func(list_out[last], loc)
             if checked == 2:
                 list_out[last] = loc
