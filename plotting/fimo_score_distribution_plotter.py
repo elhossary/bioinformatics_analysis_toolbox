@@ -9,7 +9,7 @@ def main():
     parser.add_argument("--out_file", required=True, help="", type=str)
     parser.add_argument("--title", help="", type=str)
     args = parser.parse_args()
-    col = "p-value"
+    col = "q-value"
     df = pd.read_csv(os.path.abspath(args.fimo_tsv_file), sep="\t")
     #df["score"] = df["score"].round(0)
     df["q-value"] = df["q-value"].astype(float)
