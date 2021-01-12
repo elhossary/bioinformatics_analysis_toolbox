@@ -6,6 +6,7 @@ from Bio import SeqIO
 import re
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--refseq_files", required=True, help="", type=str, nargs="+")
