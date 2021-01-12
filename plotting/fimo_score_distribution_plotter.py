@@ -12,14 +12,14 @@ def main():
 
     df = pd.read_csv(os.path.abspath(args.fimo_tsv_file), sep="\t")
     #df["score"] = df["score"].round(0)
-    bins = len(df["score"].unique().tolist())
-    disc = df["score"].describe()
-    values = df["score"].tolist()
+    bins = len(df["p-value"].unique().tolist())
+    disc = df["p-value"].describe()
+    values = df["p-value"].tolist()
     fig = plt.figure(figsize=(16, 9))
     plt.hist(values, bins=bins)
     plt.title(f"{args.title}\n"
               f"count: {disc['count']}, mean: {round(disc['mean'], 2)}, max: {disc['max']}, median: {disc['50%']}")
-    plt.xlabel(f"Score")
+    plt.xlabel(f"P-value")
     plt.ylabel("Frequency")
     plt.grid(True)
     fig.savefig(os.path.abspath(f"{args.out_file}"))
