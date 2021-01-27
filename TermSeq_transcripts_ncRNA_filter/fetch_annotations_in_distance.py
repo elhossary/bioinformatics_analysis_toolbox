@@ -56,7 +56,7 @@ def main():
         else:
             x_df = None
             exit(1)
-        x_df.sort_values(['type'], inplace=True)
+        x_df.sort_values(['type', 'start', 'end'], inplace=True)
         x_attr = {}
         for x_indx in x_df.index:
             row_attr = parse_attributes(x_df.at[x_indx, 'attributes'])
