@@ -29,6 +29,8 @@ def main():
         for i in attr[args.replace_attr_name].split(","):
             if i in attr.keys():
                 add_str += f"{genes_dict[i]},"
+            else:
+                add_str += f"{i},"
 
         replace_gff_df.at[indx, 'attributes'] += add_str[:-1]
     print("Writing GFF file...")
