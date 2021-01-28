@@ -23,7 +23,7 @@ def main():
     out_str = open(path.abspath(args.replace_gff), "r").read()
 
     for k, v in genes_dict.items():
-        out_str = out_str.replace(k, v)
+        out_str = out_str.replace(f"gene={k}", f"locus_tag={k};associated_name={v}")
 
     with open(path.abspath(args.out_gff), "w") as f:
         f.write(out_str)
