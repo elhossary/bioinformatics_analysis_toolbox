@@ -29,10 +29,12 @@ def main():
     fetch_gffs_df.drop_duplicates(inplace=True)
 
     for indx in main_gff_df.index:
+
         anno_start = main_gff_df.at[indx, 'start']
         anno_end = main_gff_df.at[indx, 'end']
         strand = main_gff_df.at[indx, 'strand']
         anno_range = range(anno_start, anno_end + 1, 1)
+        x_df = None
         if strand == "+":
             if args.allow_overlap:
                 search_start = anno_start if args.stream == "down" else anno_start - 1 - args.distance
