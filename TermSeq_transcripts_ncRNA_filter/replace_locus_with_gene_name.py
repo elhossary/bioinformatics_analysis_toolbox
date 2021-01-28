@@ -27,11 +27,9 @@ def main():
         attr = parse_attributes(replace_gff_df.at[indx, 'attributes'])
         add_str = ";associated_gene_name="
         for i in attr[args.replace_attr_name].split(","):
-            try:
-                x = f"{genes_dict[i]},"
-            except:
-                pass
-            add_str += x
+            if i in attr.keys():
+                add_str += f"{genes_dict[i]},"
+
         replace_gff_df.at[indx, 'attributes'] += add_str[:-1]
     print("Writing GFF file...")
     replace_gff_df.to_csv(path.abspath(args.out_gff), sep="\t", header=False, index=False)
