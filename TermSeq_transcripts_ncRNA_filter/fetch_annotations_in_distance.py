@@ -34,7 +34,6 @@ def main():
         anno_end = main_gff_df.at[indx, 'end']
         strand = main_gff_df.at[indx, 'strand']
         anno_range = range(anno_start, anno_end + 1, 1)
-        x_df = None
         if strand == "+":
             if args.allow_overlap:
                 search_start = anno_start if args.stream == "down" else anno_start - 1 - args.distance
@@ -59,16 +58,17 @@ def main():
             x_df = None
             exit(1)
         if x_df.empty:
+            del x_df
             continue
         x_df.sort_values(['type', 'start', 'end'], inplace=True)
         x_attr = {}
         for x_indx in x_df.index:
-            row_attr = parse_attributes(x_df.at[x_indx, 'attributes'])
-            for k in row_attr:
+            for k, v in parse_attributes(x_df.at[x_indx, 'attributes']).items():
                 if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}" not in x_attr.keys():
-                    x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] = row_attr[k]
+                    x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] = v
                 else:
-                    x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] += f"|{row_attr[k]}"
+                    x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] += f"|{v}"
+
             if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_score" not in x_attr.keys():
                 x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_score"] = x_df.at[x_indx, 'score']
             else:
@@ -78,6 +78,7 @@ def main():
                 x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_phase"] = x_df.at[x_indx, 'phase']
             else:
                 x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_phase"] += f"|{x_df.at[x_indx, 'phase']}"
+
             is_overlapping = False
             if args.allow_overlap:
                 if x_df.at[x_indx, 'start'] in anno_range or x_df.at[x_indx, 'start'] in anno_range:
