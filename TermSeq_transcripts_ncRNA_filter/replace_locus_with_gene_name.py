@@ -25,7 +25,7 @@ def main():
 
     for indx in replace_gff_df.index:
         attr = parse_attributes(replace_gff_df.at[indx, 'attributes'])
-        add_str = ";associated_name="
+        add_str = ";associated_gene_name="
         for i in attr[args.replace_attr_name].split(","):
             try:
                 add_str += f"{genes_dict[i]},"
