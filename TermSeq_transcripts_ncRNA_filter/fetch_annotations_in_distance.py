@@ -10,10 +10,13 @@ def main():
     parser.add_argument("--fetch_gffs", required=True, help="", type=str, nargs="+")
     parser.add_argument("--stream", required=True, help="", type=str, choices=["up", "down"])
     parser.add_argument("--distance", default=50, required=False, help="", type=int)
-    parser.add_argument("--copy_attr", default='all', choices=['all', 'names'])
+    parser.add_argument("--copy_attr", default=['all'], nargs="+")
+    parser.add_argument("--copy_columns", default=None,
+                        choices=["seqid", "source", "type", "start", "end", "score", "strand", "phase"], nargs="+")
     parser.add_argument("--allow_overlap", default=False, action='store_true')
     parser.add_argument("--out_gff", required=True, help="", type=str)
     args = parser.parse_args()
+    args.copy_attr = [i.lower() for i in args.copy_attr]
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     main_gff_df = pd.read_csv(path.abspath(args.main_gff), names=col_names, sep="\t", comment="#")
     fetch_gffs_df = pd.DataFrame(columns=col_names)
@@ -64,20 +67,19 @@ def main():
         x_attr = {}
         for x_indx in x_df.index:
             for k, v in parse_attributes(x_df.at[x_indx, 'attributes']).items():
+                if not args.copy_attr == ["all"] and k.lower() not in args.copy_attr:
+                    continue
                 if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}" not in x_attr.keys():
                     x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] = v
                 else:
                     x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{k}"] += f"|{v}"
 
-            if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_score" not in x_attr.keys():
-                x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_score"] = x_df.at[x_indx, 'score']
-            else:
-                x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_score"] += f"|{x_df.at[x_indx, 'score']}"
-
-            if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_phase" not in x_attr.keys():
-                x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_phase"] = x_df.at[x_indx, 'phase']
-            else:
-                x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_phase"] += f"|{x_df.at[x_indx, 'phase']}"
+            if args.copy_columns is not None:
+                for col in args.copy_columns:
+                    if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{col}" not in x_attr.keys():
+                        x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{col}"] = x_df.at[x_indx, col]
+                    else:
+                        x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_{col}"] += f"|{x_df.at[x_indx, col]}"
 
             is_overlapping = False
             if args.allow_overlap:
