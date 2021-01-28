@@ -56,6 +56,8 @@ def main():
         else:
             x_df = None
             exit(1)
+        if x_df.empty:
+            continue
         x_df.sort_values(['type', 'start', 'end'], inplace=True)
         x_attr = {}
         for x_indx in x_df.index:
