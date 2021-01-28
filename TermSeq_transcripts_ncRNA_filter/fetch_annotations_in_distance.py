@@ -43,7 +43,7 @@ def main():
                 search_end = anno_end + 1 + args.distance if args.stream == "down" else anno_start - 1
             x_df = fetch_gffs_df[(fetch_gffs_df['seqid'] == main_gff_df.at[indx, 'seqid']) &
                                  (fetch_gffs_df['strand'] == strand) &
-                                 (fetch_gffs_df['start'].isin(range(search_start, search_end + 1, 1)))].copy()
+                                 (fetch_gffs_df['start'].isin(range(search_start, search_end + 2, 1)))].copy()
         elif strand == "-":
             if args.allow_overlap:
                 search_start = anno_start if args.stream == "up" else anno_start - 1 - args.distance
@@ -53,7 +53,7 @@ def main():
                 search_end = anno_end + 1 + args.distance if args.stream == "up" else anno_start - 1
             x_df = fetch_gffs_df[(fetch_gffs_df['seqid'] == main_gff_df.at[indx, 'seqid']) &
                                  (fetch_gffs_df['strand'] == strand) &
-                                 (fetch_gffs_df['end'].isin(range(search_start, search_end + 1, 1)))].copy()
+                                 (fetch_gffs_df['end'].isin(range(search_start, search_end + 2, 1)))].copy()
         else:
             x_df = None
             exit(1)
