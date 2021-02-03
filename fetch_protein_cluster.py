@@ -21,6 +21,7 @@ def main():
     gff_df = gff_df[gff_df["type"] == "CDS"].copy()
     gff_df_len = gff_df.shape[0]
     counter = 0
+    fetch_counter = 0
     for indx in gff_df.index:
         counter += 1
         sys.stdout.flush()
@@ -32,7 +33,9 @@ def main():
         x_arr = tsv_arr[(tsv_arr[:, 1] == prot_id) | (tsv_arr[:, 1] == new_prot_id)]
         if x_arr.size > 0:
             gff_df.at[indx, "attributes"] += f";protein_cluster={x_arr[0, 0]}"
-    gff_df.to_csv(os.path.abspath(args.out_gff), sep="\t", header=False, index=False)
+            fetch_counter += 1
+    print(f"{fetch_counter} protein clusters could be fetched")
+    gff_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
 
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
