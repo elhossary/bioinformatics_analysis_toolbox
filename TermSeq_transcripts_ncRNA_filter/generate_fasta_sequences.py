@@ -2,7 +2,13 @@ import argparse
 import pandas as pd
 from os import path
 from Bio import SeqIO
+import textwrap
 
+def wrap_text(str_in):
+    str_out = ""
+    for i in textwrap.wrap(str_in, 80):
+        str_out += f"{i}\n"
+    return str_out[:-1]
 
 def parse_attributes(attr_str):
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
@@ -25,6 +31,7 @@ for seq_record in fasta_parsed:
     f_seq = str(seq_record.seq)
     r_seq = str(seq_record.reverse_complement().seq)[::-1] # reverse of reverse complement
     for index, row in gff_df.iterrows():
+        attr=parse_attributes(row['attributes'])
         if row['seqid'] == seq_record.id:
             if row['strand'] == "+":
                 start = int(row['end']) - args.end_range - 1
@@ -32,16 +39,16 @@ for seq_record in fasta_parsed:
                 if start < int(row['start']):
                     start = int(row['start'])
                 seq = f_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
-                                 f":(+)_from_{start}_to_{end}\n{seq}\n"
+                fasta_out_str += f">{row['seqid']}_{attr['id']}"\
+                                 f":(+)_from_{start}_to_{end}\n{wrap_text(seq)}\n"
             elif row['strand'] == "-":
                 start = int(row['start']) - args.offset - 1
                 end = int(row['start']) + args.end_range
                 if int(row['end']) < end:
                     end = int(row['end'])
                 seq = r_seq[start:end].replace("T", "U")
-                fasta_out_str += f">{row['seqid']}_{parse_attributes(row['attributes'])['id']}"\
-                                 f":(-)_from_{start}_to_{end}\n{seq[::-1]}\n"
+                fasta_out_str += f">{row['seqid']}_{attr['id']}"\
+                                 f":(-)_from_{start}_to_{end}\n{wrap_text(seq[::-1])}\n"
             else:
                 print("Fatal error")
 print("Writing fasta file...")

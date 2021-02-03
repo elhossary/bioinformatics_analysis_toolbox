@@ -2,6 +2,13 @@ import argparse
 import pandas as pd
 from os import path
 from Bio import SeqIO
+import textwrap
+
+def wrap_text(str_in):
+    str_out = ""
+    for i in textwrap.wrap(str_in, 80):
+        str_out += f"{i}\n"
+    return str_out[:-1]
 
 
 def parse_attributes(attr_str):
@@ -29,10 +36,10 @@ for seq_record in fasta_parsed:
         attr = parse_attributes(row['attributes'])
         if row['strand'] == "+":
             seq = f_seq[start:end]
-            fasta_out_str += f">{attr['gene']};{attr['locus_tag']}\n{seq}\n"
+            fasta_out_str += f">{attr['gene']}:{attr['locus_tag']}\n{wrap_text(seq)}\n"
         elif row['strand'] == "-":
             seq = r_seq[start:end]
-            fasta_out_str += f">{attr['gene']};{attr['locus_tag']}\n{seq[::-1]}\n"
+            fasta_out_str += f">{attr['gene']}:{attr['locus_tag']}\n{wrap_text(seq[::-1])}\n"
         else:
             print("Fatal error")
 print("Writing fasta file...")
