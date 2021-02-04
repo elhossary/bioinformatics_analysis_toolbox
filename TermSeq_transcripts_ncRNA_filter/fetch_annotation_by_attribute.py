@@ -20,16 +20,19 @@ def main():
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), sep="\t", comment="#", names=col_names)
     target_gff_df = pd.read_csv(os.path.abspath(args.target_gff_in), sep="\t", comment="#", names=col_names)
     for indx in gff_df.index:
-        if f";{args.attr_id}=" not in gff_df.at[indx, "attributes"]:
-            continue
         row_attr = parse_attributes(gff_df.at[indx, "attributes"])
+        if args.attr_id not in row_attr.keys():
+            continue
+
         find_word = f";{args.target_attr_id}={row_attr[args.attr_id]}"
         x_df = target_gff_df[target_gff_df["attributes"].str.contains(find_word)]
+        if x_df.empty:
+            continue
         x_dict = {}
         for x_indx in x_df.index:
-            if f";{args.target_attr_id}=" not in x_df.at[indx, "attributes"]:
-                continue
             target_attr = parse_attributes(x_df.at[x_indx, "attributes"])
+            if args.target_attr_id not in target_attr.keys():
+                continue
             for col in args.copy_target_attr:
                 if col in target_attr.keys():
                     if f"{args.prefix}_{col}" not in x_dict.keys():
