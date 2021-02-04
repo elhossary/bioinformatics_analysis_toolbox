@@ -43,7 +43,7 @@ def main():
                         old_gff_df.at[indx, "attributes"] += f";new_protein_id={names_dict[attr['gene']][0]}"
                         continue
             miss_counter += 1
-    rec_count = old_gff_df = old_gff_df[old_gff_df["attributes"].str.contains(";protein_id=")].shape[0]
+    rec_count = old_gff_df[old_gff_df["attributes"].str.contains(";protein_id=")].shape[0]
     print(f"{miss_counter} of {rec_count} protein IDs missed from translation")
     old_gff_df.to_csv(path.abspath(args.out_gff), sep="\t", header=False, index=False)
 
