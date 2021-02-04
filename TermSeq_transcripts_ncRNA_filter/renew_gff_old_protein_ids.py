@@ -15,7 +15,6 @@ def main():
     new_gff_df = pd.read_csv(path.abspath(args.new_gff), names=col_names, sep="\t", comment="#")
     new_gff_df = new_gff_df[(new_gff_df["attributes"].str.contains(";inference=")) & \
                             (new_gff_df["attributes"].str.contains(";protein_id="))].copy()
-    old_gff_df = old_gff_df[old_gff_df["attributes"].str.contains(";protein_id=")].copy()
     ids_dict = {}
     names_dict = {}
     miss_counter = 0
@@ -28,6 +27,8 @@ def main():
         if "gene" in attr.keys():
             names_dict[attr["gene"]] = [attr["protein_id"], new_size, attr["product"] if "product" in attr.keys() else None]
     for indx in old_gff_df.index:
+        if ";protein_id=" not in old_gff_df.at[indx, "attributes"]:
+            continue
         attr = parse_attributes(old_gff_df.at[indx, "attributes"])
         old_size = old_gff_df.at[indx, "end"] - old_gff_df.at[indx, "start"]
         old_name = attr["gene"]
