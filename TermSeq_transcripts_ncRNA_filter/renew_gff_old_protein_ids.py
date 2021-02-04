@@ -33,6 +33,7 @@ def main():
         old_size = old_gff_df.at[indx, "end"] - old_gff_df.at[indx, "start"]
         old_name = attr["gene"] if "gene" in attr.keys() else None
         old_product = attr["product"]
+
         if attr["protein_id"] in ids_dict.keys():
             if ids_dict[attr["protein_id"]][1] == old_size and ids_dict[attr["protein_id"]][2] == old_name:
                 old_gff_df.at[indx, "attributes"] += f";new_protein_id={ids_dict[attr['protein_id']][0]}"
