@@ -18,6 +18,7 @@ def main():
     tsv_arr = pd.read_csv(os.path.abspath(args.tsv_in), sep="\t", comment="#", names=tsv_col_names).to_numpy()
     print("TSV file Loaded")
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
+    tmp_gff_df = gff_df[gff_df["type"] != "CDS"].copy()
     gff_df = gff_df[gff_df["type"] == "CDS"].copy()
     gff_df_len = gff_df.shape[0]
     counter = 0
@@ -34,7 +35,9 @@ def main():
         if x_arr.size > 0:
             gff_df.at[indx, "attributes"] += f";protein_cluster={x_arr[0, 0]}"
             fetch_counter += 1
-    print(f"{fetch_counter} protein clusters could be fetched")
+    gff_df = gff_df.append(tmp_gff_df, ignore_index=True)
+    gff_df.sort_values(["seqid", "start", "end"], inplace=True)
+    print(f"\n{fetch_counter} protein clusters could be fetched")
     gff_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
 
 def parse_attributes(attr_str):
