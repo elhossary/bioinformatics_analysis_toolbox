@@ -19,16 +19,16 @@ def main():
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), sep="\t", comment="#", names=col_names)
     target_gff_df = pd.read_csv(os.path.abspath(args.target_gff_in), sep="\t", comment="#", names=col_names)
-    target_gff_df = target_gff_df[target_gff_df["attributes"].str.contains(f";{args.target_attr_id}=")]
-    if gff_df.empty or target_gff_df.empty:
-        print(f"{args.attr_id} or {args.target_attr_id} not found in one of the gff files")
-        exit()
+    print(args.target_attr_id)
+    print(args.attr_id)
     for indx in gff_df.index:
         if f";{args.attr_id}=" not in gff_df.at[indx, "attributes"]:
             continue
         row_attr = parse_attributes(gff_df.at[indx, "attributes"])
         find_word = f";{args.target_attr_id}={row_attr[args.attr_id]}"
         x_df = target_gff_df[target_gff_df["attributes"].str.contains(find_word)]
+        if x_df.empty:
+            continue
         x_dict = {}
         for x_indx in x_df.index:
             target_attr = parse_attributes(x_df.at[x_indx, "attributes"])
