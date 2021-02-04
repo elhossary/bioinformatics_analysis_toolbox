@@ -18,7 +18,7 @@ def main():
     tsv_arr = pd.read_csv(os.path.abspath(args.tsv_in), sep="\t", comment="#", names=tsv_col_names).to_numpy()
     print("TSV file Loaded")
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
-    gff_df_len = gff_df.shape[0]
+    gff_df_len = gff_df[gff_df["type"] == "CDS"].shape[0]
     counter = 0
     fetch_counter = 0
     for indx in gff_df.index:
