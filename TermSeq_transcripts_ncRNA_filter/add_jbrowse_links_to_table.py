@@ -19,8 +19,8 @@ def main():
 
 def generate_link(url, tracks, row):
     output_str = f"{url}&loc={row['seq_id']}%3A" \
-                  f"{str(int(row['start']) - 30) if int(row['start']) - 30 > 0 else 0}" \
-                  f"..{str(int(row['end']) + 30)}" \
+                  f"{str(int(row['start']) - 100) if int(row['start']) - 100 > 0 else 0}" \
+                  f"..{str(int(row['end']) + 100)}" \
                   f"&tracks={tracks}"
     return output_str
 
