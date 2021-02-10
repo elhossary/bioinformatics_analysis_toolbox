@@ -1,9 +1,9 @@
 from matplotlib_venn import venn2
 from matplotlib import pyplot as plt
 
-A = 246
-B = 148
-AB_intersect = 62
+A = 
+B =
+AB_intersect = 84
 subsets = (A - AB_intersect, B - AB_intersect, AB_intersect)
 labels = (f"{A} E. coli's genes\nwith orthologs", f"{B} K. pneumonia genes\nwith orthologs")
 fig = plt.figure(figsize=(8, 4))
