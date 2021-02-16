@@ -12,6 +12,7 @@ def main():
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
     filter_parsed = parse_filter(args.filter)
+    size_before = gff_df.shape[0]
     drop_lst = []
     for indx in gff_df.index:
         try:
@@ -29,6 +30,8 @@ def main():
         if not flg:
             drop_lst.append(indx)
     gff_df.drop(drop_lst, inplace=True, axis=0)
+    size_after = gff_df.shape[0]
+    print(f"{size_after} of {size_before} have the required filter, {size_before - size_after} ignored")
     gff_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
 
 
