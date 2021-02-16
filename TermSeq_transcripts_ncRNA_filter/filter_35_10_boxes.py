@@ -15,10 +15,7 @@ def main():
     size_before = gff_df.shape[0]
     drop_lst = []
     for indx in gff_df.index:
-        try:
-            attr = parse_attributes(gff_df.at[indx, "attributes"])
-        except:
-            continue
+        attr = parse_attributes(gff_df.at[indx, "attributes"])
         seq = attr["sequence"]
         flg = False
         for i, c in filter_parsed.items():
@@ -44,6 +41,7 @@ def parse_filter(str_in):
 
 
 def parse_attributes(attr_str):
+    attr_str = attr_str.rstrip(";")
     return {k.lower(): v for k, v in dict(item.split("=") for item in attr_str.split(";")).items()}
 
 
