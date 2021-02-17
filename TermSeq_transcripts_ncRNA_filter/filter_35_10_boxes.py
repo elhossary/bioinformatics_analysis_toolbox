@@ -12,7 +12,7 @@ def main():
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
-    filter_10 = parse_filter(args.filter10, args.spacer)
+    filter_10 = parse_filter(args.filter10, args.spacer + len(args.filter35))
     filter_35 = parse_filter(args.filter35, 0)
     for indx in gff_df.index:
         gff_df.at[indx, "attributes"] = gff_df.at[indx, "attributes"].rstrip(";")
