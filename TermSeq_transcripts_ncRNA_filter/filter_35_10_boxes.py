@@ -14,8 +14,6 @@ def main():
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
     filter_10 = parse_filter(args.filter10, args.spacer)
     filter_35 = parse_filter(args.filter35, 0)
-    size_before = gff_df.shape[0]
-    drop_lst = []
     for indx in gff_df.index:
         gff_df.at[indx, "attributes"] = gff_df.at[indx, "attributes"].rstrip(";")
         attr = parse_attributes(gff_df.at[indx, "attributes"])
@@ -34,7 +32,7 @@ def main():
             else:
                 flg35 = False
                 break
-        add_str=";motif_="
+        add_str = ";motif_filter="
         if flg10 and flg35:
             add_str += "both"
         elif not flg10 and flg35:
