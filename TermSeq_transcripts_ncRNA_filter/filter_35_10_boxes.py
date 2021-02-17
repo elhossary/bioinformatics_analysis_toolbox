@@ -13,7 +13,7 @@ def main():
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
     filter_10 = parse_filter(args.filter10, args.spacer + len(args.filter35))
-    filter_35 = parse_filter(args.filter35, 0)
+    filter_35 = parse_filter(args.filter35)
     for indx in gff_df.index:
         gff_df.at[indx, "attributes"] = gff_df.at[indx, "attributes"].rstrip(";")
         attr = parse_attributes(gff_df.at[indx, "attributes"])
@@ -45,7 +45,7 @@ def main():
     gff_df.to_csv(os.path.abspath(args.gff_in), sep="\t", header=False, index=False)
 
 
-def parse_filter(str_in, spacer):
+def parse_filter(str_in, spacer=0):
     dict_out = {}
     for i, c in enumerate(str_in):
         if c == "A" or c == "C" or c == "G" or c == "T":
