@@ -12,36 +12,42 @@ def main():
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
-    filter_10 = parse_filter(args.filter10, args.spacer + len(args.filter35))
-    filter_35 = parse_filter(args.filter35)
+    filter_10_len = len(args.filter10)
+    filter_35_len = len(args.filter35)
+    window_size = filter_35_len + args.spacer + filter_10_len
     for indx in gff_df.index:
         gff_df.at[indx, "attributes"] = gff_df.at[indx, "attributes"].rstrip(";")
         attr = parse_attributes(gff_df.at[indx, "attributes"])
         seq = attr["sequence"]
-        flg10 = False
-        flg35 = False
-        for i, c in filter_10.items():
-            if c == seq[i]:
-                flg10 = True
-            else:
-                flg10 = False
-                break
-        for i, c in filter_35.items():
-            if c == seq[i]:
-                flg35 = True
-            else:
-                flg35 = False
-                break
+        seq_Len = len(seq)
+        window_start = 0
         add_str = ";motif_filter="
-        if flg10 and flg35:
+        res_lst = []
+        for i in range(window_size, seq_Len):
+            box35_str = seq[window_start: window_start + filter_35_len]
+            box10_str = seq[i - filter_10_len: i]
+            if box35_str == args.filter35 and box10_str == args.filter10:
+                res_lst.append((True, True))
+            elif box35_str != args.filter35 and box10_str == args.filter10:
+                res_lst.append((False, True))
+            elif box35_str == args.filter35 and box10_str != args.filter10:
+                res_lst.append((True, False))
+            else:
+                res_lst.append((False, False))
+            window_start += 1
+        if (True, True) in res_lst:
             add_str += "both"
-        elif not flg10 and flg35:
-            add_str += "box 35 only"
-        elif flg10 and not flg35:
-            add_str += "box 10 only"
         else:
-            add_str += "none"
-        gff_df.at[indx, "attributes"] += add_str
+            if (False, True) in res_lst and (True, False) in res_lst:
+                add_str += "box 35 OR box 10"
+            else:
+                if (False, True) in res_lst:
+                    add_str += "box 10 only"
+                elif (True, False) in res_lst:
+                    add_str += "box 35 only"
+                else:
+                    add_str += "none"
+        print(add_str)
     gff_df.to_csv(os.path.abspath(args.gff_in), sep="\t", header=False, index=False)
 
 
