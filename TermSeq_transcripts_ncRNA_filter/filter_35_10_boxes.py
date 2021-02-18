@@ -25,9 +25,15 @@ def main():
         window_start = 0
         add_str = ";motif_filter="
         res_lst = []
-        for i in range(window_size, seq_Len - args.right_pad):
-            box35_str = seq[window_start + args.left_pad: window_start + args.left_pad + filter_35_len]
-            box10_str = seq[i - filter_10_len: i]
+        loop_iter = seq_Len - window_size - args.right_pad
+
+        for i in range(0, loop_iter):
+            sub_seq_start = args.left_pad + i
+            sub_seq_end = args.left_pad + i + window_size
+            sub_seq = seq[sub_seq_start: sub_seq_end]
+            box35_str = sub_seq[0: filter_35_len]
+            box10_str = sub_seq[window_size - filter_10_len:]
+
             if box35_str == args.filter35 and box10_str == args.filter10:
                 res_lst.append((True, True))
             elif box35_str != args.filter35 and box10_str == args.filter10:
