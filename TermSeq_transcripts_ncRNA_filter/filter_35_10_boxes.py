@@ -49,7 +49,6 @@ def main():
                     add_str += "box 35 only"
                 else:
                     add_str += "none"
-        print(add_str)
     gff_df.to_csv(os.path.abspath(args.gff_in), sep="\t", header=False, index=False)
 
 
