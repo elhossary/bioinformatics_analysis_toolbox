@@ -9,6 +9,8 @@ def main():
     parser.add_argument("--filter35", required=True, help="", type=str)
     parser.add_argument("--filter10", required=True, help="", type=str)
     parser.add_argument("--spacer", required=True, help="", type=int)
+    parser.add_argument("--left_pad", required=True, help="", type=int)
+    parser.add_argument("--right_pad", required=True, help="", type=int)
     args = parser.parse_args()
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_df = pd.read_csv(os.path.abspath(args.gff_in), names=col_names, sep="\t", comment="#")
@@ -23,8 +25,8 @@ def main():
         window_start = 0
         add_str = ";motif_filter="
         res_lst = []
-        for i in range(window_size, seq_Len):
-            box35_str = seq[window_start: window_start + filter_35_len]
+        for i in range(window_size, seq_Len - args.right_pad):
+            box35_str = seq[window_start + args.left_pad: window_start + args.left_pad + filter_35_len]
             box10_str = seq[i - filter_10_len: i]
             if box35_str == args.filter35 and box10_str == args.filter10:
                 res_lst.append((True, True))
