@@ -39,7 +39,7 @@ def main():
             add_str += "both"
         else:
             if (False, True) in res_lst and (True, False) in res_lst:
-                add_str += "box 35 OR box 10"
+                add_str += "box 10 OR box 35"
             else:
                 if (False, True) in res_lst:
                     add_str += "box 10 only"
