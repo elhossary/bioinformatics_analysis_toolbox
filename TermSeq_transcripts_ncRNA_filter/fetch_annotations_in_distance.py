@@ -66,7 +66,7 @@ def main():
         x_df.sort_values(['type', 'start', 'end'], inplace=True)
         x_attr = {}
         for x_indx in x_df.index:
-            dist = x_df.at[x_indx, "start"] - anno_end if strand == "+" else anno_start - x_df.at[x_indx, "end"]
+            dist = x_df.at[x_indx, "start"] - anno_end - 1 if strand == "+" else anno_start - x_df.at[x_indx, "end"]- 1
             if f"{args.stream}stream_{x_df.at[x_indx, 'type']}_distance" not in x_attr.keys():
                 x_attr[f"{args.stream}stream_{x_df.at[x_indx, 'type']}_distance"] = str(dist)
             else:
