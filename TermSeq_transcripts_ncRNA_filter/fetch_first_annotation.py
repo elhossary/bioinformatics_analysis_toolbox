@@ -11,7 +11,7 @@ def main():
     parser.add_argument("--anno_type", required=True, help="", type=str)
     parser.add_argument("--stream", required=True, help="", type=str, choices=["up", "down"])
     parser.add_argument("--copy_attr", default=['all'], nargs="+")
-    parser.add_argument("--copy_attr_like", default=None, help="", type=str)
+    parser.add_argument("--copy_attr_like", default=None, help="", type=str, nargs="+")
     parser.add_argument("--out_gff", required=True, help="", type=str)
     args = parser.parse_args()
     args.copy_attr = [i.lower() for i in args.copy_attr]
@@ -74,9 +74,10 @@ def main():
                 continue
             x_attr[f"{args.stream}stream_{x_first_row['type']}_{k}"] = v
         for k, v in x_first_row_attr.items():
-            if args.copy_attr_like not in k:
-                continue
-            x_attr[f"{args.stream}stream_{x_first_row['type']}_{k}"] = v
+            for attr_like in args.copy_attr_like:
+                if attr_like not in k:
+                    continue
+                x_attr[f"{args.stream}stream_{x_first_row['type']}_{k}"] = v
         main_gff_df.at[indx, "attributes"] += f";{gen_attr(x_attr)}"
         main_gff_df.at[indx, "attributes"] = main_gff_df.at[indx, "attributes"].replace(";;", ";").strip(";")
     print("Writing GFF file...")
