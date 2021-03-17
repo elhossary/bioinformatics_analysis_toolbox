@@ -44,7 +44,7 @@ def make_gff_record(in_dict, seqid):
            f"ID=IR_{seqid}_{in_dict['id']}_f;Name=Inverted_Repeat_{seqid}_{in_dict['id']}_f;"\
            f"stem_loop_len={in_dict['stem_loop_len']};stem_len={in_dict['stem_len']};loop_len={in_dict['loop_len']}\n"\
            f"{seqid}\tEMBOSS_Palindrome\tinverted_repeat\t{in_dict['stem_loop_start']}\t{in_dict['stem_loop_end']}\t.\t-\t.\t"\
-           f"ID=IR_{seqid}_{in_dict['id']}_r;Name=Inverted_Repeat_{seqid}_{in_dict['id']}_f"\
+           f"ID=IR_{seqid}_{in_dict['id']}_r;Name=Inverted_Repeat_{seqid}_{in_dict['id']}_r;"\
            f"stem_loop_len={in_dict['stem_loop_len']};stem_len={in_dict['stem_len']};loop_len={in_dict['loop_len']}"\
 
 main()

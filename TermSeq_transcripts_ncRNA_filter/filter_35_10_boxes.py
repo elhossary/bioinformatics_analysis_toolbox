@@ -52,6 +52,7 @@ def main():
                 if (False, True) in res_lst:
                     add_str += "box 10 only"
                 elif (True, False) in res_lst:
+                    print(76576)
                     add_str += "box 35 only"
                 else:
                     add_str += "none"
