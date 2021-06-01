@@ -27,8 +27,9 @@ def main():
     downstream_df = pd.read_csv(os.path.abspath(args.downstream_gff), names=col_names, sep="\t", comment="#")
     seqid_list = [x for x in upstream_df["seqid"].unique() if x in downstream_df["seqid"].unique()]
     combinations = product(seqid_list, ["+", "-"])
-    out_df = pd.DataFrame(columns=col_names)
+    all_out_df = pd.DataFrame(columns=col_names)
     for comb in combinations:
+        out_df = pd.DataFrame(columns=col_names)
         print(f"Processing {comb[0]}{comb[1]}")
         comb_upstream_df = \
             upstream_df[(upstream_df["seqid"] == comb[0]) & (upstream_df["strand"] == comb[1])].copy()
@@ -40,14 +41,15 @@ def main():
         out_df = out_df.append(merged_imperfect, ignore_index=True)
         window_merged = merge_in_window(unmerged, args)
         out_df = subtract_overlaps(out_df, window_merged)
-        out_df = merge_close_annotations(out_df, args)
-    out_df.sort_values(["seqid", "start", "end"], inplace=True)
+        out_df = merge_close_annotations(out_df, comb[1], args)
+        all_out_df = all_out_df.append(out_df)
+    all_out_df.sort_values(["seqid", "start", "end"], inplace=True)
     #out_df.drop_duplicates(subset=["seqid", "start", "end", "strand"], inplace=True)
-    out_df.reset_index(inplace=True, drop=True)
-    out_df = out_df.apply(lambda row: generate_attributes(row, args), axis=1)
+    all_out_df.reset_index(inplace=True, drop=True)
+    all_out_df = all_out_df.apply(lambda row: generate_attributes(row, args), axis=1)
     out_path = _inject_prefix(args.gff_out, args.prefix) if args.prefix != "" else os.path.abspath(args.gff_out)
-    print(f"Exporting {out_df.shape[0]} annotations")
-    out_df.to_csv(out_path, sep="\t", header=False, index=False)
+    print(f"Exporting {all_out_df.shape[0]} annotations")
+    all_out_df.to_csv(out_path, sep="\t", header=False, index=False)
 
 
 def generate_attributes(row: pd.Series, args):
@@ -60,9 +62,8 @@ def generate_attributes(row: pd.Series, args):
     return row
 
 
-def merge_close_annotations(df, args, dist=3):
+def merge_close_annotations(df, strand, args, dist=3):
     print("Merging close annotations")
-    strand = df.iat[0, 6]
     df_col = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     merge_col = ["seqid", "start", "end"]
     df = df[merge_col].copy()
