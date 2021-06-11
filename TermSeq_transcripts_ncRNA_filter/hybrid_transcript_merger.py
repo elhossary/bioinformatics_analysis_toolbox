@@ -40,7 +40,8 @@ def main():
         merged_imperfect, unmerged = merge_imperfect_overlaps(ret_dfs[1], comb[1], args)
         out_df = out_df.append(merged_imperfect, ignore_index=True)
         window_merged = merge_in_window(unmerged, args)
-        out_df = subtract_overlaps(out_df, window_merged)
+        if not window_merged.empty:
+            out_df = subtract_overlaps(out_df, window_merged)
         out_df = merge_close_annotations(out_df, comb[1], args)
         all_out_df = all_out_df.append(out_df)
     all_out_df.sort_values(["seqid", "start", "end"], inplace=True)
