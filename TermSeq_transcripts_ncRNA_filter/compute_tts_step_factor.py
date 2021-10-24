@@ -8,9 +8,6 @@ from Bio import SeqIO
 from wiggletools.wiggle import Wiggle
 from wiggletools.wiggle_matrix import WiggleMatrix
 
-
-
-
 def get_chrom_sizes(fasta_pathes):
     ret_list = []
     for fasta_path in fasta_pathes:
@@ -55,17 +52,17 @@ r_slicing_dict = {}
 for seqid in needed_seqid_list:
     f_slicing_lst = []
     r_slicing_lst = []
-    f_tss_locs = f_gff_df.loc[f_gff_df["seqid"] == seqid]["start"].values.tolist()
-    r_tss_locs = r_gff_df.loc[r_gff_df["seqid"] == seqid]["end"].values.tolist()
+    f_tts_locs = f_gff_df.loc[f_gff_df["seqid"] == seqid]["end"].values.tolist()
+    r_tts_locs = r_gff_df.loc[r_gff_df["seqid"] == seqid]["start"].values.tolist()
 
-    for i in f_tss_locs:
+    for i in f_tts_locs:
         for step in range(1, args.step_range, 1):
             f_slicing_lst.append(i + step)
             f_slicing_lst.append(i - step)
         #f_slicing_lst.append(i)
     f_slicing_lst.sort()
     f_slicing_dict[seqid] = f_slicing_lst
-    for i in r_tss_locs:
+    for i in r_tts_locs:
         for step in range(1, args.step_range, 1):
             r_slicing_lst.append(i + step)
             r_slicing_lst.append(i - step)
@@ -86,104 +83,106 @@ f_wiggles_matrix_sliced.reset_index(inplace=True)
 r_wiggles_matrix_sliced.reset_index(inplace=True)
 ###########
 
-f_wiggles_matrix_sliced["TSS_group"] = 0
-r_wiggles_matrix_sliced["TSS_group"] = 0
+f_wiggles_matrix_sliced["TTS_group"] = 0
+r_wiggles_matrix_sliced["TTS_group"] = 0
 f_wiggles_matrix_sliced["AB"] = ""
 r_wiggles_matrix_sliced["AB"] = ""
 
 f_gff_df_len = f_gff_df.shape[0]
-print("Computing TSS step height/factor")
+print("Computing TTS step height/factor")
 for i in f_gff_df.index:
     sys.stdout.flush()
     sys.stdout.write("\r" + f"==> for forward strand: {round(i / f_gff_df_len * 100)} %")
-    tss_seqid = f_gff_df.at[i, "seqid"]
-    tss_loc = f_gff_df.at[i, "start"]
+    tts_seqid = f_gff_df.at[i, "seqid"]
+    tts_loc = f_gff_df.at[i, "end"]
 
-    f_wiggles_matrix_sliced.loc[(f_wiggles_matrix_sliced["seqid"] == tss_seqid) &
-                         (f_wiggles_matrix_sliced['location'].between(tss_loc + 1, tss_loc + args.step_range)),
-                         ["TSS_group", "AB"]] = tss_loc, "A"
-    f_wiggles_matrix_sliced.loc[(f_wiggles_matrix_sliced["seqid"] == tss_seqid) &
-                         (f_wiggles_matrix_sliced['location'].between(tss_loc - args.step_range, tss_loc - 1)),
-                         ["TSS_group", "AB"]] = tss_loc, "B"
+    f_wiggles_matrix_sliced.loc[(f_wiggles_matrix_sliced["seqid"] == tts_seqid) &
+                         (f_wiggles_matrix_sliced['location'].between(tts_loc + 1, tts_loc + args.step_range)),
+                         ["TTS_group", "AB"]] = tts_loc, "A"
+    f_wiggles_matrix_sliced.loc[(f_wiggles_matrix_sliced["seqid"] == tts_seqid) &
+                         (f_wiggles_matrix_sliced['location'].between(tts_loc - args.step_range, tts_loc - 1)),
+                         ["TTS_group", "AB"]] = tts_loc, "B"
 print("\n")
 r_gff_df_len = r_gff_df.shape[0]
 for i in r_gff_df.index:
     sys.stdout.flush()
     sys.stdout.write("\r" + f"==> for reverse strand: {round(i / r_gff_df_len * 100)} %")
-    tss_seqid = r_gff_df.at[i, "seqid"]
-    tss_loc = r_gff_df.at[i, "end"]
-    r_wiggles_matrix_sliced.loc[(r_wiggles_matrix_sliced["seqid"] == tss_seqid) &
-                         (r_wiggles_matrix_sliced['location'].between(tss_loc + 1, tss_loc + args.step_range)),
-                         ["TSS_group", "AB"]] = tss_loc, "B"
-    r_wiggles_matrix_sliced.loc[(r_wiggles_matrix_sliced["seqid"] == tss_seqid) &
-                         (r_wiggles_matrix_sliced['location'].between(tss_loc - args.step_range, tss_loc - 1)),
-                         ["TSS_group", "AB"]] = tss_loc, "A"
+    tts_seqid = r_gff_df.at[i, "seqid"]
+    tts_loc = r_gff_df.at[i, "start"]
+    r_wiggles_matrix_sliced.loc[(r_wiggles_matrix_sliced["seqid"] == tts_seqid) &
+                         (r_wiggles_matrix_sliced['location'].between(tts_loc + 1, tts_loc + args.step_range)),
+                         ["TTS_group", "AB"]] = tts_loc, "B"
+    r_wiggles_matrix_sliced.loc[(r_wiggles_matrix_sliced["seqid"] == tts_seqid) &
+                         (r_wiggles_matrix_sliced['location'].between(tts_loc - args.step_range, tts_loc - 1)),
+                         ["TTS_group", "AB"]] = tts_loc, "A"
 print("\n")
 f_wiggles_matrix_sliced.drop(["location"], axis=1, inplace=True)
 r_wiggles_matrix_sliced.drop(["location"], axis=1, inplace=True)
-f_wiggles_matrix_sliced = f_wiggles_matrix_sliced.groupby(["seqid", "TSS_group", "AB"], as_index=False).mean()
-r_wiggles_matrix_sliced = r_wiggles_matrix_sliced.groupby(["seqid", "TSS_group", "AB"], as_index=False).mean()
+f_wiggles_matrix_sliced = f_wiggles_matrix_sliced.groupby(["seqid", "TTS_group", "AB"], as_index=False).mean()
+r_wiggles_matrix_sliced = r_wiggles_matrix_sliced.groupby(["seqid", "TTS_group", "AB"], as_index=False).mean()
 f_wiggles_matrix_sliced["cond_mean"] = f_wiggles_matrix_sliced.loc[:, f_wiggles_cond].mean(axis=1)
 r_wiggles_matrix_sliced["cond_mean"] = r_wiggles_matrix_sliced.loc[:, r_wiggles_cond].mean(axis=1)
 f_wiggles_matrix_sliced.drop(f_wiggles_cond, axis=1, inplace=True)
 r_wiggles_matrix_sliced.drop(r_wiggles_cond, axis=1, inplace=True)
 
 f_wiggles_matrix_A = f_wiggles_matrix_sliced.loc[f_wiggles_matrix_sliced["AB"] == "A"]\
-    .rename(columns={"TSS_group": "TSS_group_A", "cond_mean": "cond_mean_A"})
+    .rename(columns={"TTS_group": "TTS_group_A", "cond_mean": "cond_mean_A"})
 f_wiggles_matrix_A.drop(["AB"], axis=1, inplace=True)
 
 f_wiggles_matrix_B = f_wiggles_matrix_sliced.loc[f_wiggles_matrix_sliced["AB"] == "B"]\
-    .rename(columns={"TSS_group": "TSS_group_B", "cond_mean": "cond_mean_B"})
+    .rename(columns={"TTS_group": "TTS_group_B", "cond_mean": "cond_mean_B"})
 f_wiggles_matrix_B.drop(["AB"], axis=1, inplace=True)
 
 r_wiggles_matrix_A = r_wiggles_matrix_sliced.loc[r_wiggles_matrix_sliced["AB"] == "A"]\
-    .rename(columns={"TSS_group": "TSS_group_A", "cond_mean": "cond_mean_A"})
+    .rename(columns={"TTS_group": "TTS_group_A", "cond_mean": "cond_mean_A"})
 r_wiggles_matrix_A.drop(["AB"], axis=1, inplace=True)
 
 r_wiggles_matrix_B = r_wiggles_matrix_sliced.loc[r_wiggles_matrix_sliced["AB"] == "B"]\
-    .rename(columns={"TSS_group": "TSS_group_B", "cond_mean": "cond_mean_B"})
+    .rename(columns={"TTS_group": "TTS_group_B", "cond_mean": "cond_mean_B"})
 r_wiggles_matrix_B.drop(["AB"], axis=1, inplace=True)
 
 f_wiggles_matrix_sliced = pd.merge(how='inner', left=f_wiggles_matrix_A, right=f_wiggles_matrix_B,
-                                   left_on=["seqid", "TSS_group_A"], right_on=["seqid", "TSS_group_B"])
+                                   left_on=["seqid", "TTS_group_A"], right_on=["seqid", "TTS_group_B"])
 r_wiggles_matrix_sliced = pd.merge(how='inner', left=r_wiggles_matrix_A, right=r_wiggles_matrix_B,
-                                   left_on=["seqid", "TSS_group_A"], right_on=["seqid", "TSS_group_B"])
+                                   left_on=["seqid", "TTS_group_A"], right_on=["seqid", "TTS_group_B"])
 
 
-f_wiggles_matrix_sliced.drop(["TSS_group_B"], axis=1, inplace=True)
-r_wiggles_matrix_sliced.drop(["TSS_group_B"], axis=1, inplace=True)
-f_wiggles_matrix_sliced.rename(columns={"TSS_group_A": "TSS"}, inplace=True)
-r_wiggles_matrix_sliced.rename(columns={"TSS_group_A": "TSS"}, inplace=True)
+f_wiggles_matrix_sliced.drop(["TTS_group_B"], axis=1, inplace=True)
+r_wiggles_matrix_sliced.drop(["TTS_group_B"], axis=1, inplace=True)
+f_wiggles_matrix_sliced.rename(columns={"TTS_group_A": "TTS"}, inplace=True)
+r_wiggles_matrix_sliced.rename(columns={"TTS_group_A": "TTS"}, inplace=True)
 f_wiggles_matrix_sliced.reset_index(inplace=True)
 r_wiggles_matrix_sliced.reset_index(inplace=True)
 # Calculating height / factor columns
 f_wiggles_matrix_sliced["step_factor"] = \
-    (f_wiggles_matrix_sliced["cond_mean_A"] / f_wiggles_matrix_sliced["cond_mean_B"])
+    (f_wiggles_matrix_sliced["cond_mean_B"] / f_wiggles_matrix_sliced["cond_mean_A"])
 f_wiggles_matrix_sliced["step_height"] = \
-    (f_wiggles_matrix_sliced["cond_mean_A"] - f_wiggles_matrix_sliced["cond_mean_B"])
+    (f_wiggles_matrix_sliced["cond_mean_B"] - f_wiggles_matrix_sliced["cond_mean_A"])
+
 f_wiggles_matrix_sliced["step_factor"] = \
     f_wiggles_matrix_sliced["step_factor"].replace([np.inf, -np.inf, np.nan], 0).round(2).astype(str)
 f_wiggles_matrix_sliced["step_height"] = \
     f_wiggles_matrix_sliced["step_height"].replace([np.inf, -np.inf, np.nan], 0).round(2).astype(str)
 
 r_wiggles_matrix_sliced["step_factor"] = \
-    (r_wiggles_matrix_sliced["cond_mean_A"].abs() / r_wiggles_matrix_sliced["cond_mean_B"].abs())
+    (r_wiggles_matrix_sliced["cond_mean_B"].abs() / r_wiggles_matrix_sliced["cond_mean_A"].abs())
 r_wiggles_matrix_sliced["step_height"] = \
-    (r_wiggles_matrix_sliced["cond_mean_A"].abs() - r_wiggles_matrix_sliced["cond_mean_B"].abs())
+    (r_wiggles_matrix_sliced["cond_mean_B"].abs() - r_wiggles_matrix_sliced["cond_mean_A"].abs())
+
 r_wiggles_matrix_sliced["step_factor"] = \
     r_wiggles_matrix_sliced["step_factor"].replace([np.inf, -np.inf, np.nan], 0).round(2).astype(str)
 r_wiggles_matrix_sliced["step_height"] = \
     r_wiggles_matrix_sliced["step_height"].replace([np.inf, -np.inf, np.nan], 0).round(2).astype(str)
 
 f_gff_df = pd.merge(how='inner', left=f_gff_df, right=f_wiggles_matrix_sliced,
-                    left_on=["seqid", "start"], right_on=["seqid", "TSS"])
+                    left_on=["seqid", "end"], right_on=["seqid", "TTS"])
 r_gff_df = pd.merge(how='inner', left=r_gff_df, right=r_wiggles_matrix_sliced,
-                    left_on=["seqid", "end"], right_on=["seqid", "TSS"])
+                    left_on=["seqid", "start"], right_on=["seqid", "TTS"])
 out_df = f_gff_df.append(r_gff_df, ignore_index=True)
 out_df.sort_values(["seqid", "start"], inplace=True)
 out_df["attributes"] = out_df["attributes"] +\
-                       ";5_end_ave_step_height=" + out_df["step_height"] + \
-                       ";5_end_ave_step_factor=" + out_df["step_factor"]
+                       ";3_end_ave_step_height=" + out_df["step_height"] + \
+                       ";3_end_ave_step_factor=" + out_df["step_factor"]
 
 out_df = out_df.loc[:, col_names]
 out_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
