@@ -182,8 +182,8 @@ r_gff_df = pd.merge(how='inner', left=r_gff_df, right=r_wiggles_matrix_sliced,
 out_df = f_gff_df.append(r_gff_df, ignore_index=True)
 out_df.sort_values(["seqid", "start"], inplace=True)
 out_df["attributes"] = out_df["attributes"] +\
-                       ";5_end_ave_step_height=" + out_df["step_height"] + \
-                       ";5_end_ave_step_factor=" + out_df["step_factor"]
+                       ";ave_step_height=" + out_df["step_height"] + \
+                       ";ave_step_factor=" + out_df["step_factor"]
 
 out_df = out_df.loc[:, col_names]
 out_df.to_csv(os.path.abspath(args.gff_out), sep="\t", header=False, index=False)
