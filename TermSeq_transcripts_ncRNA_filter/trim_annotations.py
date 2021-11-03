@@ -34,4 +34,5 @@ def main():
     df.drop(["len"], axis=1, inplace=True)
     df.sort_values(["seqid", "start", "end"], inplace=True)
     df.to_csv(gff_file, sep="\t", header=False, index=False)
-main()
+if __name__ == '__main__':
+    main()
