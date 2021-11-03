@@ -8,8 +8,8 @@ def main():
     parser.add_argument("--gff", required=True, help="", type=str)
     parser.add_argument("--bases", required=True, help="", type=int)
     parser.add_argument("--prime_end", required=True, help="", type=str, choices=["both", "5", "3"], default="both")
-
     args = parser.parse_args()
+
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     gff_file = os.path.abspath(args.gff)
     df = pd.read_csv(gff_file, sep="\t", names=col_names, comment="#")
@@ -34,5 +34,8 @@ def main():
     df.drop(["len"], axis=1, inplace=True)
     df.sort_values(["seqid", "start", "end"], inplace=True)
     df.to_csv(gff_file, sep="\t", header=False, index=False)
+    print("Annotations trimmed")
+
+
 if __name__ == '__main__':
     main()
