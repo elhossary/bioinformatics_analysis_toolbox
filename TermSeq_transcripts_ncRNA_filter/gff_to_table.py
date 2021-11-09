@@ -86,6 +86,7 @@ for idx in gff_df.index:
                              f"&tracks={tracks}"
 gff_df.drop(['index'], axis=1, inplace=True)
 """
+gff_df.sort_values(["combined_all_scores"], inplace=True, ascending=False)
 if args.type == "csv":
     gff_df.to_csv(path.abspath(f"{args.file_out}.csv"), sep="\t", header=True, index=False)
 elif args.type == "excel":
