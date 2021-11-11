@@ -27,6 +27,8 @@ def main():
         if "gene" in attr.keys():
             names_dict[attr["gene"]] = [attr["protein_id"], new_size, attr["product"] if "product" in attr.keys() else None]
     for indx in old_gff_df.index:
+        if not isinstance(old_gff_df.at[indx, "attributes"], str):
+            continue
         if ";protein_id=" not in old_gff_df.at[indx, "attributes"]:
             continue
         attr = parse_attributes(old_gff_df.at[indx, "attributes"])
