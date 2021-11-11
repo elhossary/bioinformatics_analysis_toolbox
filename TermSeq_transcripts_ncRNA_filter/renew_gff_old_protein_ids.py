@@ -12,6 +12,7 @@ def main():
 
     col_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
     old_gff_df = pd.read_csv(path.abspath(args.old_gff), names=col_names, sep="\t", comment="#")
+
     print(old_gff_df)
     new_gff_df = pd.read_csv(path.abspath(args.new_gff), names=col_names, sep="\t", comment="#")
     new_gff_df = new_gff_df[(new_gff_df["attributes"].str.contains(";inference=")) & \
