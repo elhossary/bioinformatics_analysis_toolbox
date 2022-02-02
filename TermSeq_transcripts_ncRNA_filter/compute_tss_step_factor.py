@@ -79,9 +79,9 @@ f_wiggles_matrix_sliced = pd.DataFrame()
 r_wiggles_matrix_sliced = pd.DataFrame()
 for k in f_slicing_dict.keys():
     tmp = f_wiggles_matrix.loc[(f_wiggles_matrix.location.isin(f_slicing_dict[k])) & (f_wiggles_matrix.seqid == k)]
-    f_wiggles_matrix_sliced = f_wiggles_matrix_sliced.append(tmp, ignore_index=True)
+    f_wiggles_matrix_sliced = pd.concat([f_wiggles_matrix_sliced, tmp], ignore_index=True)
     tmp = r_wiggles_matrix.loc[(r_wiggles_matrix.location.isin(r_slicing_dict[k])) & (r_wiggles_matrix.seqid == k)]
-    r_wiggles_matrix_sliced = r_wiggles_matrix_sliced.append(tmp, ignore_index=True)
+    r_wiggles_matrix_sliced = pd.concat([r_wiggles_matrix_sliced, tmp], ignore_index=True)
 f_wiggles_matrix_sliced.reset_index(inplace=True)
 r_wiggles_matrix_sliced.reset_index(inplace=True)
 ###########
@@ -179,7 +179,7 @@ f_gff_df = pd.merge(how='inner', left=f_gff_df, right=f_wiggles_matrix_sliced,
                     left_on=["seqid", "start"], right_on=["seqid", "TSS"])
 r_gff_df = pd.merge(how='inner', left=r_gff_df, right=r_wiggles_matrix_sliced,
                     left_on=["seqid", "end"], right_on=["seqid", "TSS"])
-out_df = f_gff_df.append(r_gff_df, ignore_index=True)
+out_df = pd.concat([f_gff_df, r_gff_df], ignore_index=True)
 out_df.sort_values(["seqid", "start"], inplace=True)
 out_df["attributes"] = out_df["attributes"] +\
                        ";ave_step_height=" + out_df["step_height"] + \
