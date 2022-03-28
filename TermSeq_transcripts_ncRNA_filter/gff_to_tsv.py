@@ -1,6 +1,5 @@
 import pandas as pd
 import argparse
-from multiprocessing import Pool
 import typing
 import os
 import glob
